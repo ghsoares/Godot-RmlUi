@@ -1,7 +1,7 @@
-#ifndef GDEX_REGISTER_TYPES_H
-#define GDEX_REGISTER_TYPES_H
+#pragma once
+
+void initialize_rmlui();
+void uninitialize_rmlui();
 
 void initialize_gdex_module();
 void uninitialize_gdex_module();
-
-#endif // GDEX_REGISTER_TYPES_H

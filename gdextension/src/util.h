@@ -1,5 +1,4 @@
-#ifndef GDEXTENSION_UTIL_H
-#define GDEXTENSION_UTIL_H
+#pragma once
 
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/classes/node.hpp>
@@ -107,5 +106,3 @@ template <class K, class V>
 using HashMapIt = typename HashMap<K, V>::Iterator;
 
 }
-
-#endif // GDEXTENSION_UTIL_H
