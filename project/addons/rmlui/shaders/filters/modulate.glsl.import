@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://c2id2xh3we4kh"
+path="res://.godot/imported/modulate.glsl-1e06383a9ab58c88d97b32ceb745fc90.res"
+
+[deps]
+
+source_file="res://addons/rmlui/shaders/filters/modulate.glsl"
+dest_files=["res://.godot/imported/modulate.glsl-1e06383a9ab58c88d97b32ceb745fc90.res"]
+
+[params]
+

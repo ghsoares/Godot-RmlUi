@@ -22,6 +22,10 @@ config/icon="res://icon.svg"
 
 RMLInit="*res://addons/rmlui/rml_init.gd"
 
+[display]
+
+window/vsync/vsync_mode=0
+
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/rmlui/plugin.cfg")

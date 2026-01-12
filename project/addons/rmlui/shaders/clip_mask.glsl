@@ -20,11 +20,4 @@ void main() {
 #[fragment]
 #version 450 core
 
-layout(push_constant, std430) uniform GeometryData {
-	vec2 inv_viewport_size;
-	mat4 transform;
-} geometry_data;
-
-void main() {
-	
-}
+void main() { }

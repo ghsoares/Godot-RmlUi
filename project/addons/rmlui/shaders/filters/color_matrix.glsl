@@ -1,5 +1,3 @@
-// Main shader to clearing render target's color and alpha flag textures
-
 #[vertex]
 #version 450 core
 
@@ -16,12 +14,15 @@ void main() {
 #version 450 core
 
 layout(set = 0, binding = 0) uniform sampler2D screen;
-layout(set = 0, binding = 1) uniform usampler2D screen_alpha;
 
 layout(location = 0) out vec4 o_color;
-layout(location = 1) out uint o_alpha_flag;
+
+layout(push_constant, std430) uniform FilterParams {
+	mat4 matrix;
+} params;
 
 void main() {
     o_color = texelFetch(screen, ivec2(gl_FragCoord.xy), 0);
-    o_alpha_flag = texelFetch(screen_alpha, ivec2(gl_FragCoord.xy), 0).r;
+
+	o_color = params.matrix * o_color;
 }

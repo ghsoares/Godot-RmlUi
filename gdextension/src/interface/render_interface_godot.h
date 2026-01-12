@@ -1,7 +1,7 @@
 #pragma once
 #include <RmlUi/Core/RenderInterface.h>
 #include <godot_cpp/classes/rendering_server.hpp>
-#include <deque>
+#include <vector>
 
 #include "../rendering/rendering_utils.h"
 
@@ -16,7 +16,9 @@ private:
     static RenderInterfaceGodot *singleton;
 
     RenderFrame *target_frame;
-    std::deque<RenderTarget *> render_target_stack;
+    std::vector<RenderTarget *> render_target_stack;
+    uintptr_t render_target_stack_ptr = 0;
+
     RenderingResources internal_rendering_resources;
     RenderingResources rendering_resources;
 
@@ -26,12 +28,17 @@ private:
 
     RID shader_geometry;
     RID shader_clip_mask;
+    RID shader_layer_composition;
 
     RID pipeline_geometry;
     RID pipeline_geometry_clipping;
     RID pipeline_clip_mask_set;
     RID pipeline_clip_mask_set_inverse;
     RID pipeline_clip_mask_intersect;
+    RID pipeline_layer_composition;
+
+    std::map<uint64_t, RID> filter_shaders;
+    std::map<uint64_t, RID> filter_pipelines;
 
     RID sampler_nearest;
     RID sampler_linear;
@@ -48,6 +55,7 @@ private:
     void free_render_target(RenderTarget *p_target);
 
     void allocate_render_frame();
+    void blit_texture(const RID &p_dst, const RID &p_src, const Vector2i &p_size);
 public:
     static RenderInterfaceGodot *get_singleton();
 
@@ -72,6 +80,14 @@ public:
     void RenderToClipMask(Rml::ClipMaskOperation operation, Rml::CompiledGeometryHandle geometry, Rml::Vector2f translation);
 
     void SetTransform(const Rml::Matrix4f* transform) override;
+
+    Rml::LayerHandle PushLayer() override;
+    void RenderFilter(Rml::CompiledFilterHandle filter);
+    void CompositeLayers(Rml::LayerHandle source, Rml::LayerHandle destination, Rml::BlendMode blend_mode, Rml::Span<const Rml::CompiledFilterHandle> filters) override;
+    void PopLayer() override;
+
+    Rml::CompiledFilterHandle CompileFilter(const Rml::String& name, const Rml::Dictionary& parameters) override;
+    void ReleaseFilter(Rml::CompiledFilterHandle filter) override;
 
     RenderInterfaceGodot();
     ~RenderInterfaceGodot();

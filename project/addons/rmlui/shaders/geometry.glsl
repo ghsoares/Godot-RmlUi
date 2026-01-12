@@ -33,7 +33,6 @@ layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_color;
 
 layout(location = 0) out vec4 o_color;
-layout(location = 1) out uint o_alpha_flag;
 
 layout(push_constant, std430) uniform GeometryData {
 	vec2 inv_viewport_size;
@@ -42,8 +41,7 @@ layout(push_constant, std430) uniform GeometryData {
 } geometry_data;
 
 layout(set = 0, binding = 0) uniform sampler2D screen;
-layout(set = 0, binding = 1) uniform usampler2D screen_alpha;
-layout(set = 0, binding = 2) uniform sampler2D tex;
+layout(set = 0, binding = 1) uniform sampler2D tex;
 
 vec4 blend_mix(in vec4 p_dst, in vec4 p_src) {
 	return vec4(
@@ -54,12 +52,10 @@ vec4 blend_mix(in vec4 p_dst, in vec4 p_src) {
 
 void main() {
 	o_color = texelFetch(screen, ivec2(gl_FragCoord.xy), 0);
-	o_alpha_flag = texelFetch(screen_alpha, ivec2(gl_FragCoord.xy), 0).r;
 
 	vec4 pix_color = vec4(vec3(1.0), texture(tex, i_uv).a) * i_color;
 
 	// Custom alpha blending function, when this pixel is being rendered by the first time,
 	// sets it's color equal to the geometry color, else blend with current color
-	o_color = o_alpha_flag == 0 ? pix_color : blend_mix(o_color, pix_color);
-	o_alpha_flag = 1;
+	o_color = o_color.a <= 1.0 / 256.0 ? pix_color : blend_mix(o_color, pix_color);
 }

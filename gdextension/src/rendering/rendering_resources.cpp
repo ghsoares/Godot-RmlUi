@@ -53,7 +53,15 @@ void RenderingResources::free_all_resources() {
 }
 
 #define IMPLEMENT_RENDERING_RESOURCE(p_name) \
-void RenderingResources::free_##p_name(const RID &p_rid) { free_resource(p_rid, p_name ##_map); }
+void RenderingResources::free_##p_name(const RID &p_rid) { free_resource(p_rid, p_name ##_map); } \
+RID RenderingResources::get_or_create_ ##p_name(uint64_t p_id, const std::function<std::map<String, Variant>()> &p_get_data) { \
+	auto it = p_name ##_cache.find(p_id); \
+	if (it != p_name ##_cache.end()) { \
+		return it->second; \
+	} \
+	std::map<String, Variant> data = p_get_data(); \
+	return create_ ##p_name(data); \
+}
 
 IMPLEMENT_RENDERING_RESOURCE(sampler)
 IMPLEMENT_RENDERING_RESOURCE(texture)
@@ -90,11 +98,12 @@ RID RenderingResources::create_sampler(const std::map<String, Variant> &p_data) 
 	Ref<RDSamplerState> sampler_state;
     sampler_state.instantiate();
 
-	sampler_state->set_min_filter((RD::SamplerFilter)(int)map_get(p_data, "min_filter", RD::SAMPLER_FILTER_NEAREST));
-    sampler_state->set_mag_filter((RD::SamplerFilter)(int)map_get(p_data, "mag_filter", RD::SAMPLER_FILTER_NEAREST));
-    sampler_state->set_repeat_u((RD::SamplerRepeatMode)(int)map_get(p_data, "repeat_u", RD::SAMPLER_REPEAT_MODE_CLAMP_TO_EDGE));
-    sampler_state->set_repeat_v((RD::SamplerRepeatMode)(int)map_get(p_data, "repeat_v", RD::SAMPLER_REPEAT_MODE_CLAMP_TO_EDGE));
-    sampler_state->set_repeat_w((RD::SamplerRepeatMode)(int)map_get(p_data, "repeat_w", RD::SAMPLER_REPEAT_MODE_CLAMP_TO_EDGE));
+	sampler_state->set_min_filter((RD::SamplerFilter)(int)map_get2(p_data, "min_filter", "filter", RD::SAMPLER_FILTER_NEAREST));
+    sampler_state->set_mag_filter((RD::SamplerFilter)(int)map_get2(p_data, "mag_filter", "filter", RD::SAMPLER_FILTER_NEAREST));
+    sampler_state->set_repeat_u((RD::SamplerRepeatMode)(int)map_get2(p_data, "repeat_u", "repeat", RD::SAMPLER_REPEAT_MODE_CLAMP_TO_EDGE));
+    sampler_state->set_repeat_v((RD::SamplerRepeatMode)(int)map_get2(p_data, "repeat_v", "repeat", RD::SAMPLER_REPEAT_MODE_CLAMP_TO_EDGE));
+    sampler_state->set_repeat_w((RD::SamplerRepeatMode)(int)map_get2(p_data, "repeat_w", "repeat", RD::SAMPLER_REPEAT_MODE_CLAMP_TO_EDGE));
+    sampler_state->set_border_color((RD::SamplerBorderColor)(int)map_get(p_data, "border_color", RD::SAMPLER_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK));
 
 	RID rid = rendering_device->sampler_create(sampler_state);
 	ERR_FAIL_COND_V(!rid.is_valid(), RID());
@@ -179,8 +188,14 @@ RID RenderingResources::create_pipeline(const std::map<String, Variant> &p_data)
 	TypedArray<Ref<RDPipelineColorBlendStateAttachment>> attachments;
 	int attachment_count = map_get(p_data, "attachment_count", 1);
 	for (int i = attachment_count - 1; i >= 0; i--) {
-		Ref<RDPipelineColorBlendStateAttachment> attachment;
-		attachment.instantiate();
+		Ref<RDPipelineColorBlendStateAttachment> attachment = memnew(RDPipelineColorBlendStateAttachment);
+
+		attachment->set_enable_blend(map_get(p_data, vformat("attachment%d_enable_blend", i), false));
+		attachment->set_src_color_blend_factor((RD::BlendFactor)(int)map_get2(p_data, vformat("attachment%d_src_color_blend_factor", i), "attachment_src_color_blend_factor", RD::BLEND_FACTOR_ZERO));
+		attachment->set_src_alpha_blend_factor((RD::BlendFactor)(int)map_get2(p_data, vformat("attachment%d_src_alpha_blend_factor", i), "attachment_src_alpha_blend_factor", RD::BLEND_FACTOR_ZERO));
+		attachment->set_dst_color_blend_factor((RD::BlendFactor)(int)map_get2(p_data, vformat("attachment%d_dst_color_blend_factor", i), "attachment_dst_color_blend_factor", RD::BLEND_FACTOR_ZERO));
+		attachment->set_dst_alpha_blend_factor((RD::BlendFactor)(int)map_get2(p_data, vformat("attachment%d_dst_alpha_blend_factor", i), "attachment_dst_alpha_blend_factor", RD::BLEND_FACTOR_ZERO));
+
 		attachments.append(attachment);
 	}
     color_blend_state->set_attachments(attachments);

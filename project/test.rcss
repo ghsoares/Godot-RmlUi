@@ -5,12 +5,16 @@ body {
 @keyframes test_animation {
 	0% {
 		left: 0px;
+
+		filter: hue-rotate(0deg);
 	},
 	50% {
 		left: 128px;
 	},
 	to {
 		left: 0px;
+
+		filter: hue-rotate(360deg);
 	}
 }
 
@@ -19,7 +23,7 @@ body {
 	display: block;
 	width: 128px;
 	height: 128px;
-	background-color: green;
+	background-color: white;
 	border-radius: 32px;
 
 	overflow: hidden;

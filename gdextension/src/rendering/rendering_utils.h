@@ -2,6 +2,7 @@
 
 #include <map>
 #include <set>
+#include <functional>
 
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/rendering_device.hpp>
@@ -24,16 +25,45 @@ struct TextureData {
 	Ref<Texture> tex_ref;
 };
 
-// #define SWAP(a, b) { auto t = a; a = b; b = t; }
+struct FilterData {
+	String name;
+
+	struct Pass {
+		enum FilterBufferTarget {
+			NONE,
+			PRIMARY_BUFFER0, PRIMARY_BUFFER1,
+			SECONDARY_BUFFER0, SECONDARY_BUFFER1
+		};
+
+		RID shader;
+		RID pipeline;
+		PackedByteArray push_const;
+
+		FilterBufferTarget src0 = FilterBufferTarget::PRIMARY_BUFFER0;
+		FilterBufferTarget src1 = FilterBufferTarget::NONE;
+		FilterBufferTarget dst = FilterBufferTarget::PRIMARY_BUFFER1;
+
+		FilterBufferTarget swap0 = FilterBufferTarget::PRIMARY_BUFFER0;
+		FilterBufferTarget swap1 = FilterBufferTarget::PRIMARY_BUFFER1;
+	};
+
+	std::vector<Pass> passes;
+};
 
 struct RenderTarget {
 	RID color0, color1;
-	RID alpha_mask0, alpha_mask1;
 	RID framebuffer0, framebuffer1;
+
+	void swap() {
+		SWAP(color0, color1);
+		SWAP(framebuffer0, framebuffer1);
+	}
 };
 
 struct RenderFrame {
 	RenderTarget main_target;
+	RenderTarget primary_filter_target;
+	RenderTarget secondary_filter_target;
 	RID main_tex;
 
 	RID clip_mask;
@@ -48,10 +78,11 @@ struct RenderFrame {
 };
 
 #define DEFINE_RENDERING_RESOURCE(p_name) \
-private: ResourceMap p_name ##_map = ResourceMap(#p_name);\
+private: ResourceMap p_name ##_map = ResourceMap(#p_name); std::map<uint64_t, RID> p_name ##_cache;\
 public: \
 	RID create_##p_name(const std::map<String, Variant> &p_data = std::map<String, Variant>());\
-	void free_##p_name(const RID &p_id);
+	void free_##p_name(const RID &p_id); \
+	RID get_or_create_##p_name(uint64_t p_id, const std::function<std::map<String, Variant>()> &p_get_data);
 
 class RenderingResources {
 private:

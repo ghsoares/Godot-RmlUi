@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://ddro68acmdrm6"
+path="res://.godot/imported/color_matrix.glsl-f9ffb24a79ab83a146305f9a8e781328.res"
+
+[deps]
+
+source_file="res://addons/rmlui/shaders/filters/color_matrix.glsl"
+dest_files=["res://.godot/imported/color_matrix.glsl-f9ffb24a79ab83a146305f9a8e781328.res"]
+
+[params]
+

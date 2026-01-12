@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dofcssplp0nyi"
+path="res://.godot/imported/layer_composition.glsl-19d9fd5d7237db4480ddc27400f15843.res"
+
+[deps]
+
+source_file="res://addons/rmlui/shaders/layer_composition.glsl"
+dest_files=["res://.godot/imported/layer_composition.glsl-19d9fd5d7237db4480ddc27400f15843.res"]
+
+[params]
+
