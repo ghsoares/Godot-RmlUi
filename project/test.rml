@@ -3,6 +3,7 @@
 	<link type="text/rcss" href="test.rcss"/>
 </head>
 <body>
+	<span id="text">Hello!</span>
 	<div id="round">
 		<div id="animated"></div>
 	</div>

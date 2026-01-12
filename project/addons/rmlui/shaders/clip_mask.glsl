@@ -6,7 +6,6 @@ layout(location = 0) in vec2 i_vertex_position;
 layout(push_constant, std430) uniform GeometryData {
 	vec2 inv_viewport_size;
 	mat4 transform;
-	uint value;
 } geometry_data;
 
 void main() {
@@ -21,14 +20,11 @@ void main() {
 #[fragment]
 #version 450 core
 
-layout(location = 0) out uint o_mask;
-
 layout(push_constant, std430) uniform GeometryData {
 	vec2 inv_viewport_size;
 	mat4 transform;
-	uint value;
 } geometry_data;
 
 void main() {
-	o_mask = geometry_data.value;
+	
 }

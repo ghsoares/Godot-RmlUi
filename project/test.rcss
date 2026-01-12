@@ -1,19 +1,41 @@
+body {
+	position: relative;
+}
+
+@keyframes test_animation {
+	0% {
+		left: 0px;
+	},
+	50% {
+		left: 128px;
+	},
+	to {
+		left: 0px;
+	}
+}
+
 #round {
+	position: absolute;
 	display: block;
 	width: 128px;
 	height: 128px;
 	background-color: green;
 	border-radius: 32px;
 
-	position: relative;
 	overflow: hidden;
+	animation: test_animation 2s infinite;
 }
 
-@keyframes test_animation {
+@keyframes test_animation2 {
 	0% {
+		left: 32px;
 		transform: rotate(0deg);
 	},
+	50% {
+		left: -96px;
+	},
 	to {
+		left: 32px;
 		transform: rotate(360deg);
 	}
 }
@@ -21,10 +43,16 @@
 #animated {
 	display: block;
 	position: absolute;
-	top: 0;
-	left: 0;
 	background-color: blue;
-	width: 512px;
-	height: 512px;
-	animation: test_animation 2s infinite;
+	top: 32px;
+	width: 32px;
+	height: 32px;
+	animation: test_animation2 2s infinite;
+}
+
+#text {
+	position: absolute;
+	color: black;
+	top: 32px;
+	left: 32px;
 }

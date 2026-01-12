@@ -75,6 +75,17 @@ Variant map_get(const std::map<String, Variant> &p_map, const String &p_key, con
 	return it->second;
 }
 
+Variant map_get2(const std::map<String, Variant> &p_map, const String &p_key0, const String &p_key1, const Variant &p_default) {
+	auto it = p_map.find(p_key0);
+	if (it == p_map.end()) {
+		it = p_map.find(p_key1);
+	}
+	if (it == p_map.end()) {
+		return p_default;
+	}
+	return it->second;
+}
+
 RID RenderingResources::create_sampler(const std::map<String, Variant> &p_data) {
 	Ref<RDSamplerState> sampler_state;
     sampler_state.instantiate();
@@ -148,6 +159,22 @@ RID RenderingResources::create_pipeline(const std::map<String, Variant> &p_data)
     multisample_state.instantiate();
     depth_stencil_state.instantiate();
     color_blend_state.instantiate();
+
+	depth_stencil_state->set_enable_stencil(map_get(p_data, "enable_stencil", false));
+
+	depth_stencil_state->set_back_op_reference(map_get2(p_data, "back_op_ref", "op_ref", 0));
+	depth_stencil_state->set_back_op_write_mask(map_get2(p_data, "back_op_write_mask", "op_write_mask", 0));
+	depth_stencil_state->set_back_op_compare((RD::CompareOperator)(int)map_get2(p_data, "back_op_compare", "op_compare", RD::COMPARE_OP_ALWAYS));
+	depth_stencil_state->set_back_op_compare_mask(map_get2(p_data, "back_op_compare_mask", "op_compare_mask", 0));
+	depth_stencil_state->set_back_op_pass((RD::StencilOperation)(int)map_get2(p_data, "back_op_pass", "op_pass", RD::STENCIL_OP_ZERO));
+	depth_stencil_state->set_back_op_fail((RD::StencilOperation)(int)map_get2(p_data, "back_op_fail", "op_fail", RD::STENCIL_OP_ZERO));
+
+	depth_stencil_state->set_front_op_reference(map_get2(p_data, "front_op_ref", "op_ref", 0));
+	depth_stencil_state->set_front_op_write_mask(map_get2(p_data, "front_op_write_mask", "op_write_mask", 0));
+	depth_stencil_state->set_front_op_compare((RD::CompareOperator)(int)map_get2(p_data, "front_op_compare", "op_compare", RD::COMPARE_OP_ALWAYS));
+	depth_stencil_state->set_front_op_compare_mask(map_get2(p_data, "front_op_compare_mask", "op_compare_mask", 0));
+	depth_stencil_state->set_front_op_pass((RD::StencilOperation)(int)map_get2(p_data, "front_op_pass", "op_pass", RD::STENCIL_OP_ZERO));
+	depth_stencil_state->set_front_op_fail((RD::StencilOperation)(int)map_get2(p_data, "front_op_fail", "op_fail", RD::STENCIL_OP_ZERO));
 
 	TypedArray<Ref<RDPipelineColorBlendStateAttachment>> attachments;
 	int attachment_count = map_get(p_data, "attachment_count", 1);

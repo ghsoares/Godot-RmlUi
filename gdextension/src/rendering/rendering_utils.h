@@ -24,28 +24,27 @@ struct TextureData {
 	Ref<Texture> tex_ref;
 };
 
-struct RenderTarget {
-	RID main_tex_canvas_item;
-	RID main_tex0, main_tex1;
-	RID alpha_tex0, alpha_tex1;
+// #define SWAP(a, b) { auto t = a; a = b; b = t; }
 
-	RID framebuffer0;
-	RID framebuffer1;
+struct RenderTarget {
+	RID color0, color1;
+	RID alpha_mask0, alpha_mask1;
+	RID framebuffer0, framebuffer1;
+};
+
+struct RenderFrame {
+	RenderTarget main_target;
+	RID main_tex;
 
 	RID clip_mask;
 	RID clip_mask_framebuffer;
 
-	bool clear;
-
 	Vector2i current_size;
 	Vector2i desired_size;
 
-	bool is_valid() { return main_tex0.is_valid(); }
+	bool is_valid() { return main_tex.is_valid(); }
 
-	// When no geometry were rendered, the texture didn't clear, but also there is
-	// no need to show it.
-	bool rendered_geometry() { return !clear; }
-	RID get_texture() { return main_tex_canvas_item; }
+	RID get_texture() { return main_tex; }
 };
 
 #define DEFINE_RENDERING_RESOURCE(p_name) \

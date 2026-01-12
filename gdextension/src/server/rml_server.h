@@ -26,7 +26,7 @@ class RMLServer: public Object {
 		Rml::Context *ctx;
 		Rml::ElementDocument *doc;
 		RID canvas_item;
-		RenderTarget *render_target;
+		RenderFrame *render_frame;
 	};
 
 	RID_Owner<DocumentData> document_owner;
@@ -34,7 +34,7 @@ class RMLServer: public Object {
 	void render();
 
 	RID initialize_document(const RID &p_canvas_item);
-	void free_render_target(uint64_t p_target);
+	void free_render_frame(uint64_t p_frame);
 protected:
 	static void _bind_methods();
 	

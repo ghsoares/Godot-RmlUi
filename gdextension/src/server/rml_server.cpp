@@ -62,7 +62,7 @@ RID RMLServer::initialize_document(const RID &p_canvas_item) {
 		ERR_FAIL_V_MSG(RID(), "Couldn't create the context");
 	}
 
-	doc_data->render_target = memnew(RenderTarget);
+	doc_data->render_frame = memnew(RenderFrame);
 
 	return new_rid;
 }
@@ -255,13 +255,13 @@ bool RMLServer::load_font_face_from_buffer(const PackedByteArray &p_buffer, cons
 	);
 }
 
-void RMLServer::free_render_target(uint64_t p_target) {
-	RenderTarget *target = reinterpret_cast<RenderTarget *>(p_target);
+void RMLServer::free_render_frame(uint64_t p_frame) {
+	RenderFrame *frame = reinterpret_cast<RenderFrame *>(p_frame);
 
 	RenderInterfaceGodot *ri = RenderInterfaceGodot::get_singleton();
-	ri->free_render_target(target);
+	ri->free_render_frame(frame);
 
-	memdelete(target);
+	memdelete(frame);
 }
 
 void RMLServer::free_rid(const RID &p_rid) {
@@ -270,8 +270,8 @@ void RMLServer::free_rid(const RID &p_rid) {
 		Rml::RemoveContext(doc_data->ctx->GetName());
 
 		RenderingServer *rs = RenderingServer::get_singleton();
-		if (doc_data->render_target->is_valid()) {
-			rs->call_on_render_thread(callable_mp(this, &RMLServer::free_render_target).bind(reinterpret_cast<uint64_t>(doc_data->render_target)));
+		if (doc_data->render_frame->is_valid()) {
+			rs->call_on_render_thread(callable_mp(this, &RMLServer::free_render_frame).bind(reinterpret_cast<uint64_t>(doc_data->render_frame)));
 		}
 
 		document_owner.free(p_rid);
@@ -303,18 +303,16 @@ void RMLServer::render() {
 			continue;
 		}
 
-		doc->render_target->desired_size = size;
+		doc->render_frame->desired_size = size;
 
-		ri->set_render_target(doc->render_target);
+		ri->set_render_frame(doc->render_frame);
 		doc->ctx->Render();
-		ri->set_render_target(nullptr);
-		if (doc->render_target->rendered_geometry()) {
-			rs->canvas_item_add_texture_rect(
-				doc->canvas_item, 
-				Rect2(0, 0, size.x, size.y),
-				doc->render_target->get_texture()
-			);
-		}
+		ri->set_render_frame(nullptr);
+		rs->canvas_item_add_texture_rect(
+			doc->canvas_item, 
+			Rect2(0, 0, size.x, size.y),
+			doc->render_frame->get_texture()
+		);
 	}
 }
 

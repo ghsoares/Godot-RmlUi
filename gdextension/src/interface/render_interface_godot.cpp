@@ -36,23 +36,23 @@ RenderInterfaceGodot *RenderInterfaceGodot::get_singleton() {
 
 void RenderInterfaceGodot::initialize() {
     RenderingServer *rs = RenderingServer::get_singleton();
-    RenderingDevice *rd = rs->get_rendering_device();
+    RD *rd = rs->get_rendering_device();
 
     internal_rendering_resources = RenderingResources(rd);
     rendering_resources = RenderingResources(rd);
 
     Ref<RDVertexAttribute> pos_attr = memnew(RDVertexAttribute);
-    pos_attr->set_format(RenderingDevice::DATA_FORMAT_R32G32_SFLOAT);
+    pos_attr->set_format(RD::DATA_FORMAT_R32G32_SFLOAT);
     pos_attr->set_location(0);
     pos_attr->set_stride(4 * 2); // 4 bytes * 2 members (xy)
 
     Ref<RDVertexAttribute> color_attr = memnew(RDVertexAttribute);
-    color_attr->set_format(RenderingDevice::DATA_FORMAT_R32G32B32A32_SFLOAT);
+    color_attr->set_format(RD::DATA_FORMAT_R32G32B32A32_SFLOAT);
     color_attr->set_location(1);
     color_attr->set_stride(4 * 4); // 4 bytes * 4 members (rgba)
 
     Ref<RDVertexAttribute> uv_attr = memnew(RDVertexAttribute);
-    uv_attr->set_format(RenderingDevice::DATA_FORMAT_R32G32_SFLOAT);
+    uv_attr->set_format(RD::DATA_FORMAT_R32G32_SFLOAT);
     uv_attr->set_location(2);
     uv_attr->set_stride(4 * 2); // 4 bytes * 2 members (xy)
 
@@ -60,23 +60,21 @@ void RenderInterfaceGodot::initialize() {
     Ref<RDAttachmentFormat> alpha_attachment = memnew(RDAttachmentFormat);
     Ref<RDAttachmentFormat> clip_mask_attachment = memnew(RDAttachmentFormat);
 
-    color_attachment->set_format(RenderingDevice::DATA_FORMAT_R8G8B8A8_UNORM);
-    color_attachment->set_usage_flags(RenderingDevice::TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT);
+    uint64_t main_usage = RD::TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RD::TEXTURE_USAGE_SAMPLING_BIT | RD::TEXTURE_USAGE_CAN_COPY_FROM_BIT | RD::TEXTURE_USAGE_CAN_COPY_TO_BIT;
+
+    color_attachment->set_format(RD::DATA_FORMAT_R8G8B8A8_UNORM);
+    color_attachment->set_usage_flags(main_usage);
     
-    alpha_attachment->set_format(RenderingDevice::DATA_FORMAT_R8_UINT);
-    alpha_attachment->set_usage_flags(RenderingDevice::TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT);
+    alpha_attachment->set_format(RD::DATA_FORMAT_R8_UINT);
+    alpha_attachment->set_usage_flags(main_usage);
 
-    clip_mask_attachment->set_format(RenderingDevice::DATA_FORMAT_R8_UINT);
-    clip_mask_attachment->set_usage_flags(RenderingDevice::TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT);
+    clip_mask_attachment->set_format(RD::DATA_FORMAT_S8_UINT);
+    clip_mask_attachment->set_usage_flags(RD::TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | RD::TEXTURE_USAGE_CAN_COPY_FROM_BIT | RD::TEXTURE_USAGE_CAN_COPY_TO_BIT);
 
-    geometry_framebuffer_format = rd->framebuffer_format_create({ color_attachment, alpha_attachment });
+    geometry_framebuffer_format = rd->framebuffer_format_create({ color_attachment, alpha_attachment, clip_mask_attachment });
     clip_mask_framebuffer_format = rd->framebuffer_format_create({ clip_mask_attachment });
     geometry_vertex_format = rd->vertex_format_create({ pos_attr, color_attr, uv_attr });
 
-    shader_blit = internal_rendering_resources.create_shader({
-        {"path", "res://addons/rmlui/shaders/blit.glsl"},
-        {"name", "__render_interface_blit_shader"}
-    });
     shader_geometry = internal_rendering_resources.create_shader({
         {"path", "res://addons/rmlui/shaders/geometry.glsl"},
         {"name", "__render_interface_geometry_shader"}
@@ -86,22 +84,65 @@ void RenderInterfaceGodot::initialize() {
         {"name", "__render_interface_clip_mask_shader"}
     });
 
-    pipeline_blit = internal_rendering_resources.create_pipeline({
-        {"shader", shader_blit},
-        {"framebuffer_format", geometry_framebuffer_format},
-        {"attachment_count", 2}
-    });
     pipeline_geometry = internal_rendering_resources.create_pipeline({
         {"shader", shader_geometry},
         {"framebuffer_format", geometry_framebuffer_format},
         {"vertex_format", geometry_vertex_format},
-        {"attachment_count", 2}
+        {"attachment_count", 3}
     });
-    pipeline_clip_mask = internal_rendering_resources.create_pipeline({
+    pipeline_geometry_clipping = internal_rendering_resources.create_pipeline({
+        {"shader", shader_geometry},
+        {"framebuffer_format", geometry_framebuffer_format},
+        {"vertex_format", geometry_vertex_format},
+        {"attachment_count", 3},
+        
+        {"enable_stencil", true},
+        {"op_ref", 0x01},
+        {"op_compare", RD::COMPARE_OP_EQUAL},
+        {"op_compare_mask", 0xff},
+        {"op_write_mask", 0x00},
+        {"op_pass", RD::STENCIL_OP_KEEP},
+        {"op_fail", RD::STENCIL_OP_KEEP},
+    });
+
+    pipeline_clip_mask_set = internal_rendering_resources.create_pipeline({
         {"shader", shader_clip_mask},
         {"framebuffer_format", clip_mask_framebuffer_format},
         {"vertex_format", geometry_vertex_format},
-        {"attachment_count", 1}
+        {"attachment_count", 0},
+
+        {"enable_stencil", true},
+        {"op_ref", 0x01},
+        {"op_write_mask", 0xff},
+        {"op_compare", RD::COMPARE_OP_ALWAYS},
+        {"op_compare_mask", 0xff},
+        {"op_pass", RD::STENCIL_OP_REPLACE},
+    });
+    pipeline_clip_mask_set_inverse = internal_rendering_resources.create_pipeline({
+        {"shader", shader_clip_mask},
+        {"framebuffer_format", clip_mask_framebuffer_format},
+        {"vertex_format", geometry_vertex_format},
+        {"attachment_count", 0},
+
+        {"enable_stencil", true},
+        {"op_ref", 0x01},
+        {"op_write_mask", 0xff},
+        {"op_compare", RD::COMPARE_OP_ALWAYS},
+        {"op_compare_mask", 0xff},
+        {"op_pass", RD::STENCIL_OP_REPLACE},
+    });
+    pipeline_clip_mask_intersect = internal_rendering_resources.create_pipeline({
+        {"shader", shader_clip_mask},
+        {"framebuffer_format", clip_mask_framebuffer_format},
+        {"vertex_format", geometry_vertex_format},
+        {"attachment_count", 0},
+
+        {"enable_stencil", true},
+        {"op_ref", 0x01},
+        {"op_write_mask", 0xff},
+        {"op_compare", RD::COMPARE_OP_ALWAYS},
+        {"op_compare_mask", 0xff},
+        {"op_pass", RD::STENCIL_OP_REPLACE},
     });
 
     sampler_nearest = internal_rendering_resources.create_sampler({});
@@ -115,11 +156,11 @@ void RenderInterfaceGodot::initialize() {
     white_texture_buf.fill(255);
 
     texture_white = internal_rendering_resources.create_texture({
-        {"texture_type", RenderingDevice::TEXTURE_TYPE_2D},
+        {"texture_type", RD::TEXTURE_TYPE_2D},
         {"width", 4},
         {"height", 4},
-        {"format", RenderingDevice::DATA_FORMAT_R8G8B8A8_UNORM},
-        {"usage_bits", RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT},
+        {"format", RD::DATA_FORMAT_R8G8B8A8_UNORM},
+        {"usage_bits", RD::TEXTURE_USAGE_SAMPLING_BIT},
         {"data", TypedArray<PackedByteArray>({white_texture_buf})}
     });
 }
@@ -129,134 +170,121 @@ void RenderInterfaceGodot::uninitialize() {
 }
 
 void RenderInterfaceGodot::allocate_render_target(RenderTarget *p_target) {
-    if (p_target->current_size == p_target->desired_size) {
-        return;
-    }
-
     RenderingServer *rs = RenderingServer::get_singleton();
 
-    free_render_target(p_target);
-
-    uint64_t main_usage = RenderingDevice::TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT;
-    p_target->main_tex0 = rendering_resources.create_texture({
-        {"width", p_target->desired_size.x},
-        {"height", p_target->desired_size.y},
-        {"format", RenderingDevice::DATA_FORMAT_R8G8B8A8_UNORM},
+    uint64_t main_usage = RD::TEXTURE_USAGE_COLOR_ATTACHMENT_BIT | RD::TEXTURE_USAGE_SAMPLING_BIT | RD::TEXTURE_USAGE_CAN_COPY_FROM_BIT | RD::TEXTURE_USAGE_CAN_COPY_TO_BIT;
+    p_target->color0 = rendering_resources.create_texture({
+        {"width", target_frame->current_size.x},
+        {"height", target_frame->current_size.y},
+        {"format", RD::DATA_FORMAT_R8G8B8A8_UNORM},
         {"usage_bits", main_usage},
     });
-    p_target->main_tex1 = rendering_resources.create_texture({
-        {"width", p_target->desired_size.x},
-        {"height", p_target->desired_size.y},
-        {"format", RenderingDevice::DATA_FORMAT_R8G8B8A8_UNORM},
+    p_target->color1 = rendering_resources.create_texture({
+        {"width", target_frame->current_size.x},
+        {"height", target_frame->current_size.y},
+        {"format", RD::DATA_FORMAT_R8G8B8A8_UNORM},
         {"usage_bits", main_usage},
     });
-    p_target->alpha_tex0 = rendering_resources.create_texture({
-        {"width", p_target->desired_size.x},
-        {"height", p_target->desired_size.y},
-        {"format", RenderingDevice::DATA_FORMAT_R8_UINT},
+    p_target->alpha_mask0 = rendering_resources.create_texture({
+        {"width", target_frame->current_size.x},
+        {"height", target_frame->current_size.y},
+        {"format", RD::DATA_FORMAT_R8_UINT},
         {"usage_bits", main_usage},
     });
-    p_target->alpha_tex1 = rendering_resources.create_texture({
-        {"width", p_target->desired_size.x},
-        {"height", p_target->desired_size.y},
-        {"format", RenderingDevice::DATA_FORMAT_R8_UINT},
+    p_target->alpha_mask1 = rendering_resources.create_texture({
+        {"width", target_frame->current_size.x},
+        {"height", target_frame->current_size.y},
+        {"format", RD::DATA_FORMAT_R8_UINT},
         {"usage_bits", main_usage},
     });
-    p_target->clip_mask = rendering_resources.create_texture({
-        {"width", p_target->desired_size.x},
-        {"height", p_target->desired_size.y},
-        {"format", RenderingDevice::DATA_FORMAT_R8_UINT},
-        {"usage_bits", main_usage},
-    });
-    p_target->main_tex_canvas_item = rs->texture_rd_create(p_target->main_tex0);
 
     p_target->framebuffer0 = rendering_resources.create_framebuffer({
-        {"textures", TypedArray<RID>({ p_target->main_tex0, p_target->alpha_tex0 })}
+        {"textures", TypedArray<RID>({ p_target->color0, p_target->alpha_mask0, target_frame->clip_mask })}
     });
     p_target->framebuffer1 = rendering_resources.create_framebuffer({
-        {"textures", TypedArray<RID>({ p_target->main_tex1, p_target->alpha_tex1 })}
+        {"textures", TypedArray<RID>({ p_target->color1, p_target->alpha_mask1, target_frame->clip_mask })}
     });
-    p_target->clip_mask_framebuffer = rendering_resources.create_framebuffer({
-        {"textures", TypedArray<RID>({ p_target->clip_mask })}
-    });
-
-    p_target->current_size = p_target->desired_size;
 }
 
 void RenderInterfaceGodot::free_render_target(RenderTarget *p_target) {
-    RenderingServer *rs = RenderingServer::get_singleton();
-
     if (p_target->framebuffer0.is_valid()) {
         rendering_resources.free_framebuffer(p_target->framebuffer0);
     }
     if (p_target->framebuffer1.is_valid()) {
         rendering_resources.free_framebuffer(p_target->framebuffer1);
     }
-    if (p_target->clip_mask_framebuffer.is_valid()) {
-        rendering_resources.free_framebuffer(p_target->clip_mask_framebuffer);
-    }
 
-    if (p_target->main_tex_canvas_item.is_valid()) {
-        rs->free_rid(p_target->main_tex_canvas_item);
+    if (p_target->color0.is_valid()) {
+        rendering_resources.free_texture(p_target->color0);
     }
-    if (p_target->main_tex0.is_valid()) {
-        rendering_resources.free_texture(p_target->main_tex0);
+    if (p_target->color1.is_valid()) {
+        rendering_resources.free_texture(p_target->color1);
     }
-    if (p_target->main_tex1.is_valid()) {
-        rendering_resources.free_texture(p_target->main_tex1);
+    if (p_target->alpha_mask0.is_valid()) {
+        rendering_resources.free_texture(p_target->alpha_mask0);
     }
-    if (p_target->alpha_tex0.is_valid()) {
-        rendering_resources.free_texture(p_target->alpha_tex0);
-    }
-    if (p_target->alpha_tex1.is_valid()) {
-        rendering_resources.free_texture(p_target->alpha_tex1);
-    }
-    if (p_target->clip_mask.is_valid()) {
-        rendering_resources.free_texture(p_target->clip_mask);
+    if (p_target->alpha_mask1.is_valid()) {
+        rendering_resources.free_texture(p_target->alpha_mask1);
     }
 }
 
-void RenderInterfaceGodot::blit_render_target(RenderTarget *p_target) {
-    ERR_FAIL_COND(!shader_blit.is_valid() || !pipeline_blit.is_valid());
+void RenderInterfaceGodot::allocate_render_frame() {
+    if (target_frame->current_size == target_frame->desired_size) {
+        return;
+    }
 
-    RenderingDevice *rd = rendering_resources.device();
+    target_frame->current_size = target_frame->desired_size;
 
-    Ref<RDUniform> screen_texture_uniform = memnew(RDUniform);
-    Ref<RDUniform> screen_alpha_uniform = memnew(RDUniform);
+    RenderingServer *rs = RenderingServer::get_singleton();
 
-    screen_texture_uniform->set_uniform_type(RenderingDevice::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
-    screen_texture_uniform->set_binding(0);
-    screen_texture_uniform->add_id(sampler_nearest);
-    screen_texture_uniform->add_id(p_target->main_tex1);
-    
-    screen_alpha_uniform->set_uniform_type(RenderingDevice::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
-    screen_alpha_uniform->set_binding(1);
-    screen_alpha_uniform->add_id(sampler_nearest);
-    screen_alpha_uniform->add_id(p_target->alpha_tex1);
+    free_render_frame(target_frame);
 
-    RID uniform_set = UniformSetCacheRD::get_cache(shader_blit, 0, { screen_texture_uniform, screen_alpha_uniform });
+    target_frame->clip_mask = rendering_resources.create_texture({
+        {"width", target_frame->current_size.x},
+        {"height", target_frame->current_size.y},
+        {"format", RD::DATA_FORMAT_S8_UINT},
+        {"usage_bits", RD::TEXTURE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | RD::TEXTURE_USAGE_CAN_COPY_FROM_BIT | RD::TEXTURE_USAGE_CAN_COPY_TO_BIT},
+    });
+    target_frame->clip_mask_framebuffer = rendering_resources.create_framebuffer({
+        {"textures", TypedArray<RID>({ target_frame->clip_mask })}
+    });
 
-    int draw_list = rd->draw_list_begin(p_target->framebuffer0, RenderingDevice::DRAW_DEFAULT_ALL);
-    rd->draw_list_bind_render_pipeline(draw_list, pipeline_blit);
-    rd->draw_list_bind_uniform_set(draw_list, uniform_set, 0);
-    rd->draw_list_draw(draw_list, false, 1, 3);
-    rd->draw_list_end();
+    allocate_render_target(&target_frame->main_target);
+    target_frame->main_tex = rs->texture_rd_create(target_frame->main_target.color0);
 }
 
-void RenderInterfaceGodot::set_render_target(RenderTarget *p_target) {
+void RenderInterfaceGodot::free_render_frame(RenderFrame *p_frame) {
+    RenderingServer *rs = RenderingServer::get_singleton();
+
+    free_render_target(&p_frame->main_target);
+
+    if (p_frame->clip_mask_framebuffer.is_valid()) {
+        rendering_resources.free_framebuffer(p_frame->clip_mask_framebuffer);
+    }
+    if (p_frame->clip_mask.is_valid()) {
+        rendering_resources.free_texture(p_frame->clip_mask);
+    }
+}
+
+void RenderInterfaceGodot::set_render_frame(RenderFrame *p_frame) {
     render_target_stack.clear();
-    if (p_target == nullptr) return;
+    target_frame = p_frame;
+    if (p_frame == nullptr) return;
 
-    allocate_render_target(p_target);
+    allocate_render_frame();
 
-    p_target->clear = true;
-    render_target_stack.push_back(p_target);
+    render_target_stack.push_back(&p_frame->main_target);
+    RD *rd = rendering_resources.device();
+    rd->texture_clear(p_frame->main_target.color0, Color(0, 0, 0, 0), 0, 1, 0, 1);
+    rd->texture_clear(p_frame->main_target.color1, Color(0, 0, 0, 0), 0, 1, 0, 1);
+    rd->texture_clear(p_frame->main_target.alpha_mask0, Color(0, 0, 0, 0), 0, 1, 0, 1);
+    rd->texture_clear(p_frame->main_target.alpha_mask1, Color(0, 0, 0, 0), 0, 1, 0, 1);
 }
 
 Rml::CompiledGeometryHandle RenderInterfaceGodot::CompileGeometry(Rml::Span<const Rml::Vertex> vertices, Rml::Span<const int> indices) {
     MeshData *mesh_data = memnew(MeshData);
 
-    RenderingDevice *rd = rendering_resources.device();
+    RD *rd = rendering_resources.device();
 
     PackedByteArray position_array, color_array, uv_array, indices_array;
     position_array.resize(vertices.size() * 2 * 4);
@@ -331,33 +359,23 @@ void RenderInterfaceGodot::RenderGeometry(Rml::CompiledGeometryHandle geometry, 
     MeshData *mesh_data = reinterpret_cast<MeshData *>(geometry);
     ERR_FAIL_NULL(mesh_data);
     
-    RenderingDevice *rd = rendering_resources.device();
+    RD *rd = rendering_resources.device();
 
     Ref<RDUniform> screen_texture_uniform = memnew(RDUniform);
-    screen_texture_uniform->set_uniform_type(RenderingDevice::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
+    screen_texture_uniform->set_uniform_type(RD::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
     screen_texture_uniform->set_binding(0);
     screen_texture_uniform->add_id(sampler_nearest);
-    screen_texture_uniform->add_id(target->main_tex0);
+    screen_texture_uniform->add_id(target->color0);
     
     Ref<RDUniform> screen_alpha_uniform = memnew(RDUniform);
-    screen_alpha_uniform->set_uniform_type(RenderingDevice::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
+    screen_alpha_uniform->set_uniform_type(RD::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
     screen_alpha_uniform->set_binding(1);
     screen_alpha_uniform->add_id(sampler_nearest);
-    screen_alpha_uniform->add_id(target->alpha_tex0);
-
-    Ref<RDUniform> clip_mask_uniform = memnew(RDUniform);
-    clip_mask_uniform->set_uniform_type(RenderingDevice::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
-    clip_mask_uniform->set_binding(2);
-    clip_mask_uniform->add_id(sampler_nearest);
-    if (clip_mask_enabled) {
-        clip_mask_uniform->add_id(target->clip_mask);
-    } else {
-        clip_mask_uniform->add_id(texture_white);
-    }
+    screen_alpha_uniform->add_id(target->alpha_mask0);
     
     Ref<RDUniform> texture_uniform = memnew(RDUniform);
-    texture_uniform->set_uniform_type(RenderingDevice::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
-    texture_uniform->set_binding(3);
+    texture_uniform->set_uniform_type(RD::UNIFORM_TYPE_SAMPLER_WITH_TEXTURE);
+    texture_uniform->set_binding(2);
     texture_uniform->add_id(sampler_linear);
     if (texture == 0) {
         texture_uniform->add_id(texture_white);
@@ -366,15 +384,15 @@ void RenderInterfaceGodot::RenderGeometry(Rml::CompiledGeometryHandle geometry, 
         texture_uniform->add_id(tex_data->rid);
     }
 
-    RID uniform_set = UniformSetCacheRD::get_cache(shader_geometry, 0, { screen_texture_uniform, screen_alpha_uniform, clip_mask_uniform, texture_uniform });
+    RID uniform_set = UniformSetCacheRD::get_cache(shader_geometry, 0, { screen_texture_uniform, screen_alpha_uniform, texture_uniform });
 
     Projection final_transform = drawing_matrix * Projection(Transform3D(Basis(), Vector3(translation.x, translation.y, 0.0)));
 
     PackedByteArray push_const;
     push_const.resize(96);
     float *push_const_ptr = (float *)push_const.ptrw();
-    push_const_ptr[0] = 1.0 / target->current_size.x;
-    push_const_ptr[1] = 1.0 / target->current_size.y;
+    push_const_ptr[0] = 1.0 / target_frame->current_size.x;
+    push_const_ptr[1] = 1.0 / target_frame->current_size.y;
 
     push_const_ptr[4] = final_transform.columns[0].x;
     push_const_ptr[5] = final_transform.columns[0].y;
@@ -399,31 +417,16 @@ void RenderInterfaceGodot::RenderGeometry(Rml::CompiledGeometryHandle geometry, 
     unsigned int *push_const_int_ptr = (unsigned int *)push_const.ptrw();
     push_const_int_ptr[20] = clip_mask_enabled ? 1 : 0;
 
-    int draw_list;
-    if (target->clear) {
-        target->clear = false;
-        int other_draw_list = rd->draw_list_begin(
-            target->framebuffer0, 
-            RenderingDevice::DRAW_CLEAR_COLOR_0 | RenderingDevice::DRAW_CLEAR_COLOR_1, 
-            { Color(0, 0, 0, 0), Color(0, 0, 0, 0) }
-        );
-        rd->draw_list_end();
-        draw_list = rd->draw_list_begin(
-            target->framebuffer1, 
-            RenderingDevice::DRAW_CLEAR_COLOR_0 | RenderingDevice::DRAW_CLEAR_COLOR_1, 
-            { Color(0, 0, 0, 0), Color(0, 0, 0, 0) }
-        );
-    } else {
-        draw_list = rd->draw_list_begin(target->framebuffer1, RenderingDevice::DRAW_DEFAULT_ALL);
-    }
+    int draw_list = rd->draw_list_begin(target->framebuffer1, RD::DRAW_DEFAULT_ALL);
     if (scissor_enabled) {
         rd->draw_list_enable_scissor(draw_list, scissor_region);
     } else {
         RenderingServer *rs = RenderingServer::get_singleton();
-        RenderingDevice *rd = rs->get_rendering_device();
+        RD *rd = rs->get_rendering_device();
         rd->draw_list_disable_scissor(draw_list);
     }
-    rd->draw_list_bind_render_pipeline(draw_list, pipeline_geometry);
+    RID pipeline = clip_mask_enabled ? pipeline_geometry_clipping : pipeline_geometry;
+    rd->draw_list_bind_render_pipeline(draw_list, pipeline);
     rd->draw_list_bind_vertex_array(draw_list, mesh_data->vertex_array);
     rd->draw_list_bind_index_array(draw_list, mesh_data->index_array);
     rd->draw_list_bind_uniform_set(draw_list, uniform_set, 0);
@@ -432,7 +435,7 @@ void RenderInterfaceGodot::RenderGeometry(Rml::CompiledGeometryHandle geometry, 
     rd->draw_list_draw(draw_list, true, 1);
     rd->draw_list_end();
 
-    blit_render_target(target);
+    rd->texture_copy(target->color1, target->color0, Vector3(), Vector3(), Vector3(target_frame->current_size.x, target_frame->current_size.y, 1), 0, 0, 0, 0);
 }
 
 void RenderInterfaceGodot::ReleaseGeometry(Rml::CompiledGeometryHandle geometry) {
@@ -440,7 +443,7 @@ void RenderInterfaceGodot::ReleaseGeometry(Rml::CompiledGeometryHandle geometry)
     ERR_FAIL_NULL(mesh_data);
 
     RenderingServer *rs = RenderingServer::get_singleton();
-    RenderingDevice *rd = rs->get_rendering_device();
+    RD *rd = rs->get_rendering_device();
     
     rendering_resources.free_vertex_array(mesh_data->vertex_array);
     rendering_resources.free_index_array(mesh_data->index_array);
@@ -479,7 +482,7 @@ Rml::TextureHandle RenderInterfaceGodot::GenerateTexture(Rml::Span<const Rml::by
 
     memcpy(ptrw, source.data(), source.size());
 
-    RenderingDevice *rd = rendering_resources.device();
+    RD *rd = rendering_resources.device();
 
     TextureData *tex_data = memnew(TextureData());
     tex_data->rid = rendering_resources.create_texture({
@@ -528,15 +531,15 @@ void RenderInterfaceGodot::RenderToClipMask(Rml::ClipMaskOperation operation, Rm
     MeshData *mesh_data = reinterpret_cast<MeshData *>(geometry);
     ERR_FAIL_NULL(mesh_data);
     
-    RenderingDevice *rd = rendering_resources.device();
+    RD *rd = rendering_resources.device();
 
     Projection final_transform = drawing_matrix * Projection(Transform3D(Basis(), Vector3(translation.x, translation.y, 0.0)));
 
     PackedByteArray push_const;
-    push_const.resize(96);
+    push_const.resize(80);
     float *push_const_ptr = (float *)push_const.ptrw();
-    push_const_ptr[0] = 1.0 / target->current_size.x;
-    push_const_ptr[1] = 1.0 / target->current_size.y;
+    push_const_ptr[0] = 1.0 / target_frame->current_size.x;
+    push_const_ptr[1] = 1.0 / target_frame->current_size.y;
 
     push_const_ptr[4] = final_transform.columns[0].x;
     push_const_ptr[5] = final_transform.columns[0].y;
@@ -558,27 +561,38 @@ void RenderInterfaceGodot::RenderToClipMask(Rml::ClipMaskOperation operation, Rm
     push_const_ptr[18] = final_transform.columns[3].z;
     push_const_ptr[19] = final_transform.columns[3].w;
     
-    unsigned int *push_const_int_ptr = (unsigned int *)push_const.ptrw();
-    push_const_int_ptr[20] = operation == Rml::ClipMaskOperation::SetInverse ? 0 : 1;
-
-    int draw_list;
-    if (operation == Rml::ClipMaskOperation::Intersect) {
-        draw_list = rd->draw_list_begin(target->clip_mask_framebuffer, RenderingDevice::DRAW_DEFAULT_ALL);
-    } else {
-        unsigned int value = operation == Rml::ClipMaskOperation::Set ? 0 : 1;
-        draw_list = rd->draw_list_begin(target->clip_mask_framebuffer, RenderingDevice::DRAW_CLEAR_COLOR_0, {
-            Color::from_rgba8(value, 0, 0)
-        });
+    uint64_t clear_flags = RD::DRAW_CLEAR_STENCIL;
+    uint32_t clear_stencil_value = 0;
+    if (operation == Rml::ClipMaskOperation::SetInverse) {
+        clear_stencil_value = 1;
     }
+    if (operation == Rml::ClipMaskOperation::Intersect) {
+        clear_flags = RD::DRAW_DEFAULT_ALL;
+    }
+    int draw_list = rd->draw_list_begin(target_frame->clip_mask_framebuffer, clear_flags, {}, 1.0f, clear_stencil_value);
 
     if (scissor_enabled) {
         rd->draw_list_enable_scissor(draw_list, scissor_region);
     } else {
         RenderingServer *rs = RenderingServer::get_singleton();
-        RenderingDevice *rd = rs->get_rendering_device();
+        RD *rd = rs->get_rendering_device();
         rd->draw_list_disable_scissor(draw_list);
     }
-    rd->draw_list_bind_render_pipeline(draw_list, pipeline_clip_mask);
+
+    RID pipeline;
+    switch (operation) {
+        case Rml::ClipMaskOperation::Set: {
+            pipeline = pipeline_clip_mask_set;
+        } break;
+        case Rml::ClipMaskOperation::SetInverse: {
+            pipeline = pipeline_clip_mask_set_inverse;
+        } break;
+        case Rml::ClipMaskOperation::Intersect: {
+            pipeline = pipeline_clip_mask_intersect;
+        } break;
+    }
+
+    rd->draw_list_bind_render_pipeline(draw_list, pipeline);
     rd->draw_list_bind_vertex_array(draw_list, mesh_data->vertex_array);
     rd->draw_list_bind_index_array(draw_list, mesh_data->index_array);
     rd->draw_list_set_push_constant(draw_list, push_const, push_const.size());
