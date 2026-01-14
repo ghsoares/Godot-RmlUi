@@ -111,6 +111,7 @@ public:
 	Rml::Element *get_element() const;
 
 	static Ref<RMLElement> ref(ElementRef &ref);
+	static Ref<RMLElement> ref(ElementRef &&ref);
 	static Ref<RMLElement> empty();
 
 	RMLElement(): element(nullptr) {}

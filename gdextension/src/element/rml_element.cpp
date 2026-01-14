@@ -33,9 +33,7 @@ void RMLElement::remove_child(const Ref<RMLElement> &p_child) {
 
 Ref<RMLElement> RMLElement::query_selector(const String &p_selector) const {
 	ENSURE_VALID_V(this, RMLElement::empty());
-	ElementRef ref = ElementRef(element->QuerySelector(godot_to_rml_string(p_selector)));
-
-	return RMLElement::ref(ref);
+	return RMLElement::ref(element->QuerySelector(godot_to_rml_string(p_selector)));
 }
 
 TypedArray<Ref<RMLElement>> RMLElement::query_selector_all(const String &p_selector) const {
@@ -46,8 +44,7 @@ TypedArray<Ref<RMLElement>> RMLElement::query_selector_all(const String &p_selec
 	element->QuerySelectorAll(list, godot_to_rml_string(p_selector));
 
 	for (Rml::Element *el : list) {
-		ElementRef ref = ElementRef(el);
-		ret.append(RMLElement::ref(ref));
+		ret.append(RMLElement::ref(el));
 	}
 
 	return ret;
@@ -60,17 +57,14 @@ int RMLElement::get_child_count() const {
 
 Ref<RMLElement> RMLElement::get_parent() const {
 	ENSURE_VALID_V(this, RMLElement::empty());
-	ElementRef ref = ElementRef(element->GetParentNode());
-	return RMLElement::ref(ref);
+	return RMLElement::ref(element->GetParentNode());
 }
 
 Ref<RMLElement> RMLElement::get_child(int p_idx) const {
 	ENSURE_VALID_V(this, RMLElement::empty());
 	int count = element->GetNumChildren();
 	ERR_FAIL_INDEX_V(p_idx, count, RMLElement::empty());
-
-	ElementRef ref = ElementRef(element->GetChild(p_idx));
-	return RMLElement::ref(ref);
+	return RMLElement::ref(element->GetChild(p_idx));
 }
 
 TypedArray<Ref<RMLElement>> RMLElement::get_children() const {
@@ -80,8 +74,7 @@ TypedArray<Ref<RMLElement>> RMLElement::get_children() const {
 	ret.resize(count);
 
 	for (int i = 0; i < count; i++) {
-		ElementRef ref = ElementRef(element->GetChild(i));
-		ret[i] = RMLElement::ref(ref);
+		ret[i] = RMLElement::ref(element->GetChild(i));
 	}
 
 	return ret;
@@ -196,6 +189,13 @@ Rml::Element *RMLElement::get_element() const {
 }
 
 Ref<RMLElement> RMLElement::ref(ElementRef &ref) {
+	Ref<RMLElement> ret;
+	ret.instantiate();
+	ret->element = ref;
+	return ret;
+}
+
+Ref<RMLElement> RMLElement::ref(ElementRef &&ref) {
 	Ref<RMLElement> ret;
 	ret.instantiate();
 	ret->element = ref;

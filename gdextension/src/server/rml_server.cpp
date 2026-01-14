@@ -129,8 +129,7 @@ Ref<RMLElement> RMLServer::get_document_root(const RID &p_document) {
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL_V(doc_data, nullptr);
 
-	ElementRef ref = ElementRef(doc_data->doc);
-	return RMLElement::ref(ref);
+	return RMLElement::ref(doc_data->doc);
 }
 
 Ref<RMLElement> RMLServer::create_element(const RID &p_document, const String &p_tag_name) {
@@ -140,8 +139,7 @@ Ref<RMLElement> RMLServer::create_element(const RID &p_document, const String &p
 
 	Rml::String tag_name = godot_to_rml_string(p_tag_name);
 
-	ElementRef ref = ElementRef(doc_data->doc->CreateElement(tag_name));
-	return RMLElement::ref(ref);
+	return RMLElement::ref(doc_data->doc->CreateElement(tag_name));
 }
 
 void RMLServer::document_set_size(const RID &p_document, const Vector2i &p_size) {
