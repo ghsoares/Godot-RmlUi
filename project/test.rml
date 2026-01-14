@@ -6,5 +6,7 @@
 	<span id="text">Hello!</span>
 	<button>Press me!</button>
 	<svg src="icon.svg"/>
+	<input type="text" placeholder="Insert your name"/>
+	<span id="name">Enter your name</span>
 </body>
 </rml>

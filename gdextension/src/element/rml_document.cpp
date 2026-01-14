@@ -19,6 +19,13 @@ void RMLDocument::_notification(int p_what) {
 				get_size().x,
 				get_size().y
 			));
+			set_process(true);
+		} break;
+		case NOTIFICATION_EXIT_TREE: {
+			set_process(false);
+		} break;
+		case NOTIFICATION_PROCESS: {
+			update();
 		} break;
 		case NOTIFICATION_RESIZED: {
 			RMLServer::get_singleton()->document_set_size(rid, Vector2i(
@@ -42,10 +49,6 @@ void RMLDocument::_gui_input(const Ref<InputEvent> &p_event) {
 	if (RMLServer::get_singleton()->document_process_event(rid, p_event)) {
 		accept_event();
 	}
-}
-
-void RMLDocument::_unhandled_key_input(const Ref<InputEvent> &p_event) {
-	
 }
 
 void RMLDocument::new_document() {
@@ -75,6 +78,10 @@ void RMLDocument::load_from_path(const String &p_path) {
 	RMLServer::get_singleton()->document_set_size(rid, get_size());
 }
 
+void RMLDocument::update() {
+	RMLServer::get_singleton()->document_update(rid);
+}
+
 Ref<RMLElement> RMLDocument::as_element() const {
 	return RMLServer::get_singleton()->get_document_root(rid);
 }
@@ -87,6 +94,7 @@ void RMLDocument::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("new_document"), &RMLDocument::new_document);
 	ClassDB::bind_method(D_METHOD("load_from_rml_string", "rml_string"), &RMLDocument::load_from_rml_string);
 	ClassDB::bind_method(D_METHOD("load_from_path", "path"), &RMLDocument::load_from_path);
+	ClassDB::bind_method(D_METHOD("update"), &RMLDocument::update);
 
 	ClassDB::bind_method(D_METHOD("as_element"), &RMLDocument::as_element);
 	ClassDB::bind_method(D_METHOD("create_element", "tag_name"), &RMLDocument::create_element);

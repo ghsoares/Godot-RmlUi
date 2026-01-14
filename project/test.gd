@@ -1,15 +1,6 @@
 extends RMLDocument
 
-func get_rml_tree_string(el: RMLElement, depth: int = 0, tab = "\t") -> String:
-	var s: PackedStringArray
-	s.append("%s<%s>" % [tab.repeat(depth), el.get_tag_name()])
-	
-	for c: RMLElement in el.get_children():
-		s.append(get_rml_tree_string(c, depth + 1, tab))
-	
-	s.append("%s</%s>" % [tab.repeat(depth), el.get_tag_name()])
-	
-	return "\n".join(s)
+var current_text: String
 
 func _ready() -> void:
 	load_from_path("res://test.rml")
@@ -17,3 +8,14 @@ func _ready() -> void:
 	as_element().query_selector("button").add_event_listener("click", func (_ev):
 		as_element().toggle_class("trippy")
 	)
+	as_element().query_selector("input").add_event_listener("change", func (ev):
+		current_text = ev.value
+		update_name_text()
+	)
+	update_name_text()
+
+func update_name_text() -> void:
+	if current_text.strip_edges().is_empty():
+		as_element().query_selector("#name").set_text_content("Enter your name above")
+	else:
+		as_element().query_selector("#name").set_text_content("Your name is: %s!" % current_text.strip_edges())

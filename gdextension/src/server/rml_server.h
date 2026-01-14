@@ -53,6 +53,7 @@ public:
 	Ref<RMLElement> get_document_root(const RID &p_document);
 	Ref<RMLElement> create_element(const RID &p_document, const String &p_tag_name);
 
+	void document_update(const RID &p_document);
 	void document_set_size(const RID &p_document, const Vector2i &p_size);
 	bool document_process_event(const RID &p_document, const Ref<InputEvent> &p_event);
 

@@ -224,6 +224,23 @@ void RMLElement::set_inner_rml(const String &p_rml) {
 	element->SetInnerRML(godot_to_rml_string(p_rml));
 }
 
+PackedStringArray RMLElement::get_text_content() const {
+	ENSURE_VALID_V(this, PackedStringArray());
+	Rml::ElementList el_list;
+	element->GetElementsByTagName(el_list, "#text");
+	PackedStringArray texts;
+	for (auto it : el_list) {
+		Rml::ElementText *text = (Rml::ElementText *)it;
+		texts.append(rml_to_godot_string(text->GetText()));
+	}
+	return texts;
+}
+
+String RMLElement::get_inner_rml() const {
+	ENSURE_VALID_V(this, "");
+	return rml_to_godot_string(element->GetInnerRML());
+}
+
 Rml::Element *RMLElement::get_element() const {
 	return element.get();
 }
@@ -287,5 +304,8 @@ void RMLElement::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_text_content", "text"), &RMLElement::set_text_content);
 	ClassDB::bind_method(D_METHOD("set_inner_rml", "rml"), &RMLElement::set_inner_rml);
+
+	ClassDB::bind_method(D_METHOD("get_text_content"), &RMLElement::get_text_content);
+	ClassDB::bind_method(D_METHOD("get_inner_rml"), &RMLElement::get_inner_rml);
 }
 

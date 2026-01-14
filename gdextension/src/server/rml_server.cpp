@@ -5,6 +5,8 @@
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
 #include <godot_cpp/classes/input_event_mouse_motion.hpp>
 #include <godot_cpp/classes/input_event_key.hpp>
+#include <godot_cpp/classes/input_event_screen_touch.hpp>
+#include <godot_cpp/classes/input_event_screen_drag.hpp>
 #include <godot_cpp/classes/font_file.hpp>
 #include <godot_cpp/classes/theme_db.hpp>
 #include "../interface/render_interface_godot.h"
@@ -142,6 +144,13 @@ Ref<RMLElement> RMLServer::create_element(const RID &p_document, const String &p
 	return RMLElement::ref(doc_data->doc->CreateElement(tag_name));
 }
 
+void RMLServer::document_update(const RID &p_document) {
+	ERR_FAIL_COND(!document_owner.owns(p_document));
+	DocumentData *doc_data = document_owner.get_or_null(p_document);
+	ERR_FAIL_NULL(doc_data);
+	doc_data->ctx->Update();
+}
+
 void RMLServer::document_set_size(const RID &p_document, const Vector2i &p_size) {
 	ERR_FAIL_COND(!document_owner.owns(p_document));
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
@@ -160,12 +169,13 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 	Ref<InputEventKey> k = p_event;
 	if (k.is_valid()) {
 		if (k->is_pressed()) {
+			Rml::Input::KeyIdentifier key_identifier = godot_to_rml_key(k->get_keycode());
 			bool propagated = doc_data->ctx->ProcessKeyDown(
-				godot_to_rml_key(k->get_keycode()), 
+				key_identifier, 
 				godot_to_rml_key_modifiers(k->get_modifiers_mask())
 			);
 			char32_t c = k->get_unicode();
-			if (c >= 0 && c <= 255 && !(k->get_modifiers_mask() & KeyModifierMask::KEY_MASK_CTRL)) {
+			if (((c >= 32 || c == '\n') && c != 127) && !(k->get_modifiers_mask() & KeyModifierMask::KEY_MASK_CTRL)) {
 				propagated &= doc_data->ctx->ProcessTextInput(c);
 			}
 			return !propagated;
@@ -220,11 +230,49 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 
 	Ref<InputEventMouseMotion> mm = p_event;
 	if (mm.is_valid()) {
+		Vector2 mpos = mm->get_position();
+		Rml::Vector2i ctx_size = doc_data->ctx->GetDimensions();
+		if (mpos.x < 0 || mpos.x >= ctx_size.x || mpos.y < 0 || mpos.y >= ctx_size.y) {
+			return !doc_data->ctx->ProcessMouseLeave();
+		}
 		return !doc_data->ctx->ProcessMouseMove(
-			mm->get_position().x,
-            mm->get_position().y,
+			mpos.x,
+            mpos.y,
             godot_to_rml_key_modifiers(mm->get_modifiers_mask())
 		);
+	}
+
+	Ref<InputEventScreenTouch> touch = p_event;
+	if (touch.is_valid()) {
+		Rml::TouchList list;
+		list.push_back(Rml::Touch {
+			.identifier = (unsigned int)touch->get_index(),
+			.position = Rml::Vector2f(
+				touch->get_position().x,
+				touch->get_position().y
+			)
+		});
+		if (touch->is_canceled()){
+			return !doc_data->ctx->ProcessTouchCancel(list);
+		}
+		if (touch->is_pressed()) {
+			return !doc_data->ctx->ProcessTouchStart(list, 0);
+		} else {
+			return !doc_data->ctx->ProcessTouchEnd(list, 0);
+		}
+	}
+
+	Ref<InputEventScreenDrag> drag = p_event;
+	if (drag.is_valid()) {
+		Rml::TouchList list;
+		list.push_back(Rml::Touch {
+			.identifier = (unsigned int)drag->get_index(),
+			.position = Rml::Vector2f(
+				drag->get_position().x,
+				drag->get_position().y
+			)
+		});
+		return !doc_data->ctx->ProcessTouchMove(list, 0);
 	}
 
 	return false;
