@@ -46,7 +46,7 @@ layout(set = 0, binding = 1) uniform sampler2D tex;
 void main() {
 	o_color = texelFetch(screen, ivec2(gl_FragCoord.xy), 0);
 
-	vec4 pix_color = vec4(vec3(1.0), texture(tex, i_uv).a) * i_color;
+	vec4 pix_color = vec4(texture(tex, i_uv)) * i_color;
 
 	// Custom alpha blending function, when this pixel is being rendered by the first time,
 	// sets it's color equal to the geometry color, else blend with current color

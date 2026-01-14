@@ -744,7 +744,6 @@ void RenderInterfaceGodot::SetTransform(const Rml::Matrix4f* transform) {
         return;
     }
     drawing_matrix = *transform;
-    drawing_matrix = Rml::Matrix4f::Identity();
 }
 
 Rml::LayerHandle RenderInterfaceGodot::PushLayer() {

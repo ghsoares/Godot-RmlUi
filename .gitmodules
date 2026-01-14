@@ -5,3 +5,6 @@
 [submodule "gdextension/RmlUi"]
 	path = gdextension/RmlUi
 	url = https://github.com/mikke89/RmlUi.git
+[submodule "gdextension/lunasvg"]
+	path = gdextension/lunasvg
+	url = https://github.com/sammycage/lunasvg.git

@@ -1,1 +1,15 @@
-* {}
+@keyframes scaling_animation {
+	0% {
+		width: 32px;
+	},
+	50% {
+		width: 512px;
+	}
+	100% {
+		width: 32px;
+	},
+}
+
+svg {
+	animation: scaling_animation 2s infinite;
+}
