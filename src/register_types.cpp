@@ -5,6 +5,7 @@
 #include "interface/system_interface_godot.h"
 #include "interface/render_interface_godot.h"
 #include "interface/file_interface_godot.h"
+#include "interface/font_engine_interface_godot.h"
 #include "element/rml_document.h"
 #include "element/rml_element.h"
 #include "server/rml_server.h"
@@ -22,7 +23,6 @@
 
 #include <RmlUi/Core.h>
 
-
 using namespace godot;
 
 static RMLServer *rml_server = nullptr;
@@ -31,11 +31,13 @@ void initialize_rmlui() {
     static SystemInterfaceGodot system;
     static RenderInterfaceGodot render;
     static FileInterfaceGodot file;
+	static FontEngineInterfaceGodot font;
 	static RmlPluginGodot plugin;
 	
 	Rml::SetSystemInterface(&system);
 	Rml::SetRenderInterface(&render);
 	Rml::SetFileInterface(&file);
+	Rml::SetFontEngineInterface(&font);
 	Rml::RegisterPlugin(&plugin);
 	Rml::Initialise();
 }
