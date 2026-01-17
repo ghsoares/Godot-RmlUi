@@ -8,3 +8,6 @@
 [submodule "gdextension/lunasvg"]
 	path = dependencies/lunasvg
 	url = https://github.com/sammycage/lunasvg.git
+[submodule "dependencies/msdfgen"]
+	path = dependencies/msdfgen
+	url = https://github.com/Chlumsky/msdfgen.git
