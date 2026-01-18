@@ -1,10 +1,10 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
-build/
+libs/
+__pycache__/
 *.obj
 *.dblite
 *.o
 *.os
 *.a
-**/__pycache__
