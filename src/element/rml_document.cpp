@@ -48,6 +48,8 @@ void RMLDocument::_notification(int p_what) {
 void RMLDocument::_gui_input(const Ref<InputEvent> &p_event) {
 	if (RMLServer::get_singleton()->document_process_event(rid, p_event)) {
 		accept_event();
+		Control::CursorShape new_shape = (Control::CursorShape)RMLServer::get_singleton()->document_get_cursor_shape(rid);
+		set_default_cursor_shape(new_shape);
 	}
 }
 

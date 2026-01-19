@@ -11,6 +11,7 @@
 #include <godot_cpp/classes/theme_db.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include "../interface/render_interface_godot.h"
+#include "../interface/system_interface_godot.h"
 #include "../plugin/rml_godot_plugin.h"
 #include "../rml_util.h"
 #include "../project_settings.h"
@@ -177,12 +178,15 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 	ERR_FAIL_COND_V(!document_owner.owns(p_document), false);
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL_V(doc_data, false);
+
+	SystemInterfaceGodot::get_singleton()->set_context_document(p_document);
+	bool propagated = true;
 	
 	Ref<InputEventKey> k = p_event;
 	if (k.is_valid()) {
 		if (k->is_pressed()) {
 			Rml::Input::KeyIdentifier key_identifier = godot_to_rml_key(k->get_keycode());
-			bool propagated = doc_data->ctx->ProcessKeyDown(
+			propagated = doc_data->ctx->ProcessKeyDown(
 				key_identifier, 
 				godot_to_rml_key_modifiers(k->get_modifiers_mask())
 			);
@@ -190,53 +194,70 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 			if (((c >= 32 || c == '\n') && c != 127) && !(k->get_modifiers_mask() & KeyModifierMask::KEY_MASK_CTRL)) {
 				propagated &= doc_data->ctx->ProcessTextInput(c);
 			}
-			return !propagated;
+		} else {
+			propagated = doc_data->ctx->ProcessKeyUp(
+				godot_to_rml_key(k->get_keycode()), 
+				godot_to_rml_key_modifiers(k->get_modifiers_mask())
+			);
 		}
-		return !doc_data->ctx->ProcessKeyUp(
-			godot_to_rml_key(k->get_keycode()), 
-			godot_to_rml_key_modifiers(k->get_modifiers_mask())
-		);
 	}
 
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {
 		if (mb->is_pressed()) {
 			switch (mb->get_button_index()) {
-				case MouseButton::MOUSE_BUTTON_LEFT: return !doc_data->ctx->ProcessMouseButtonDown(
-					0,
-					godot_to_rml_key_modifiers(mb->get_modifiers_mask())
-				);
-				case MouseButton::MOUSE_BUTTON_RIGHT: return !doc_data->ctx->ProcessMouseButtonDown(
-					1,
-					godot_to_rml_key_modifiers(mb->get_modifiers_mask())
-				);
-				case MouseButton::MOUSE_BUTTON_MIDDLE: return !doc_data->ctx->ProcessMouseButtonDown(
-					2,
-					godot_to_rml_key_modifiers(mb->get_modifiers_mask())
-				);
-				case MouseButton::MOUSE_BUTTON_WHEEL_UP: return !doc_data->ctx->ProcessMouseWheel(
-					1.0,
-					godot_to_rml_key_modifiers(mb->get_modifiers_mask())
-				);
-				case MouseButton::MOUSE_BUTTON_WHEEL_DOWN: return !doc_data->ctx->ProcessMouseWheel(
-					-1.0,
-					godot_to_rml_key_modifiers(mb->get_modifiers_mask())
-				);
+				case MouseButton::MOUSE_BUTTON_LEFT: {
+					propagated = doc_data->ctx->ProcessMouseButtonDown(
+						0,
+						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
+					);
+				} break;
+				case MouseButton::MOUSE_BUTTON_RIGHT: {
+					propagated = doc_data->ctx->ProcessMouseButtonDown(
+						1,
+						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
+					);
+				} break;
+				case MouseButton::MOUSE_BUTTON_MIDDLE: {
+					propagated = doc_data->ctx->ProcessMouseButtonDown(
+						2,
+						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
+					);
+				} break;
+				case MouseButton::MOUSE_BUTTON_WHEEL_UP: {
+					propagated = doc_data->ctx->ProcessMouseWheel(
+						1.0,
+						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
+					);
+				} break;
+				case MouseButton::MOUSE_BUTTON_WHEEL_DOWN: {
+					propagated = doc_data->ctx->ProcessMouseWheel(
+						-1.0,
+						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
+					);
+				} break;
 			}
-		}
-		switch (mb->get_button_index()) {
-			case MouseButton::MOUSE_BUTTON_LEFT: return !doc_data->ctx->ProcessMouseButtonUp(
-				0,
-				godot_to_rml_key_modifiers(mb->get_modifiers_mask())
-			);
-			case MouseButton::MOUSE_BUTTON_RIGHT: return !doc_data->ctx->ProcessMouseButtonUp(
-				1,
-				godot_to_rml_key_modifiers(mb->get_modifiers_mask())
-			);
-			case MouseButton::MOUSE_BUTTON_MIDDLE: return !doc_data->ctx->ProcessMouseButtonUp(
-				2,
-				godot_to_rml_key_modifiers(mb->get_modifiers_mask())
-			);
+		} else {
+			switch (mb->get_button_index()) {
+				case MouseButton::MOUSE_BUTTON_LEFT: {
+					propagated = doc_data->ctx->ProcessMouseButtonUp(
+						0,
+						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
+					);
+				} break;
+				case MouseButton::MOUSE_BUTTON_RIGHT: {
+					propagated = doc_data->ctx->ProcessMouseButtonUp(
+						1,
+						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
+					);
+				} break;
+				case MouseButton::MOUSE_BUTTON_MIDDLE: {
+					propagated = doc_data->ctx->ProcessMouseButtonUp(
+						2,
+						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
+					);
+				} break;
+			}
 		}
 	}
 
@@ -245,13 +266,14 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 		Vector2 mpos = mm->get_position();
 		Rml::Vector2i ctx_size = doc_data->ctx->GetDimensions();
 		if (mpos.x < 0 || mpos.x >= ctx_size.x || mpos.y < 0 || mpos.y >= ctx_size.y) {
-			return !doc_data->ctx->ProcessMouseLeave();
+			propagated = doc_data->ctx->ProcessMouseLeave();
+		} else {
+			propagated = doc_data->ctx->ProcessMouseMove(
+				mpos.x,
+				mpos.y,
+				godot_to_rml_key_modifiers(mm->get_modifiers_mask())
+			);
 		}
-		return !doc_data->ctx->ProcessMouseMove(
-			mpos.x,
-            mpos.y,
-            godot_to_rml_key_modifiers(mm->get_modifiers_mask())
-		);
 	}
 
 	Ref<InputEventScreenTouch> touch = p_event;
@@ -265,12 +287,11 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 			)
 		});
 		if (touch->is_canceled()){
-			return !doc_data->ctx->ProcessTouchCancel(list);
-		}
-		if (touch->is_pressed()) {
-			return !doc_data->ctx->ProcessTouchStart(list, 0);
+			propagated = doc_data->ctx->ProcessTouchCancel(list);
+		} else if (touch->is_pressed()) {
+			propagated = doc_data->ctx->ProcessTouchStart(list, 0);
 		} else {
-			return !doc_data->ctx->ProcessTouchEnd(list, 0);
+			propagated = doc_data->ctx->ProcessTouchEnd(list, 0);
 		}
 	}
 
@@ -284,10 +305,28 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 				drag->get_position().y
 			)
 		});
-		return !doc_data->ctx->ProcessTouchMove(list, 0);
+		propagated = doc_data->ctx->ProcessTouchMove(list, 0);
 	}
 
-	return false;
+	SystemInterfaceGodot::get_singleton()->set_context_document(RID());
+
+	return !propagated;
+}
+
+void RMLServer::document_set_cursor_shape(const RID &p_document, const Input::CursorShape &p_shape) {
+	ERR_FAIL_COND(!document_owner.owns(p_document));
+	DocumentData *doc_data = document_owner.get_or_null(p_document);
+	ERR_FAIL_NULL(doc_data);
+
+	doc_data->cursor_shape = p_shape;
+}
+
+Input::CursorShape RMLServer::document_get_cursor_shape(const RID &p_document) {
+	ERR_FAIL_COND_V(!document_owner.owns(p_document), Input::CURSOR_ARROW);
+	DocumentData *doc_data = document_owner.get_or_null(p_document);
+	ERR_FAIL_NULL_V(doc_data, Input::CURSOR_ARROW);
+
+	return doc_data->cursor_shape;
 }
 
 bool RMLServer::load_default_stylesheet(const String &p_path) {

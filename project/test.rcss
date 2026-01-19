@@ -4,3 +4,7 @@ body {
 	align-items: flex-start;
 	gap: 4px;
 }
+
+button {
+	cursor: progress;
+}

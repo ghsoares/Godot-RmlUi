@@ -5,7 +5,14 @@
 namespace godot {
 
 class SystemInterfaceGodot : public Rml::SystemInterface {
+private:
+	RID current_document = RID();
+    static SystemInterfaceGodot *singleton;
+
 public:
+	static SystemInterfaceGodot *get_singleton();
+	void set_context_document(const RID &p_rid);
+
 	double GetElapsedTime() override;
 
 	int TranslateString(Rml::String& translated, const Rml::String& input) override;
@@ -23,6 +30,8 @@ public:
 	void ActivateKeyboard(Rml::Vector2f caret_position, float line_height) override;
 
 	void DeactivateKeyboard() override;
+
+	SystemInterfaceGodot();
 };
 
 }

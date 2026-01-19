@@ -4,9 +4,20 @@
 #include <godot_cpp/classes/translation_server.hpp>
 #include <godot_cpp/classes/input.hpp>
 
+#include "../server/rml_server.h"
 #include "system_interface_godot.h"
 
 using namespace godot;
+
+SystemInterfaceGodot *SystemInterfaceGodot::singleton = nullptr;
+
+SystemInterfaceGodot *SystemInterfaceGodot::get_singleton() {
+	return singleton;
+}
+
+void SystemInterfaceGodot::set_context_document(const RID &p_rid) {
+	current_document = p_rid;
+}
 
 double SystemInterfaceGodot::GetElapsedTime() {
 	return Time::get_singleton()->get_ticks_msec() / 1000.0;
@@ -84,7 +95,18 @@ void SystemInterfaceGodot::SetMouseCursor(const Rml::String& cursor_name) {
 	else if (cursor_name == "not-allowed") {
 		shape = Input::CursorShape::CURSOR_FORBIDDEN;
 	}
-	Input::get_singleton()->set_default_cursor_shape(shape);
+	else if (cursor_name == "help") {
+		shape = Input::CursorShape::CURSOR_HELP;
+	}
+	else if (cursor_name == "progress") {
+		shape = Input::CursorShape::CURSOR_BUSY;
+	}
+	else if (cursor_name == "wait") {
+		shape = Input::CursorShape::CURSOR_WAIT;
+	}
+	if (current_document.is_valid()) {
+		RMLServer::get_singleton()->document_set_cursor_shape(current_document, shape);
+	}
 }
 
 void SystemInterfaceGodot::SetClipboardText(const Rml::String& text) {
@@ -110,4 +132,8 @@ void SystemInterfaceGodot::DeactivateKeyboard() {
 		return;
 	}
 	DisplayServer::get_singleton()->virtual_keyboard_hide();
+}
+
+SystemInterfaceGodot::SystemInterfaceGodot() {
+	singleton = this;
 }

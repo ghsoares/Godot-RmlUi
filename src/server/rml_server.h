@@ -1,6 +1,7 @@
 #pragma once
 
 #include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event.hpp>
 #include <godot_cpp/templates/rid_owner.hpp>
 #include <RmlUi/Core.h>
@@ -28,6 +29,7 @@ class RMLServer: public Object {
 		Rml::ElementDocument *doc;
 		RID canvas_item;
 		RenderFrame *render_frame;
+		Input::CursorShape cursor_shape = Input::CURSOR_ARROW;
 	};
 
 	RID_Owner<DocumentData> document_owner;
@@ -56,6 +58,8 @@ public:
 	void document_update(const RID &p_document);
 	void document_set_size(const RID &p_document, const Vector2i &p_size);
 	bool document_process_event(const RID &p_document, const Ref<InputEvent> &p_event);
+	void document_set_cursor_shape(const RID &p_document, const Input::CursorShape &p_shape);
+	Input::CursorShape document_get_cursor_shape(const RID &p_document);
 
 	bool load_default_stylesheet(const String &p_path);
 
