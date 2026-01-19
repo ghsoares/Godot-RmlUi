@@ -280,14 +280,14 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 
 	Ref<InputEventScreenTouch> touch = p_event;
 	if (touch.is_valid()) {
+		Rml::Touch touch_info;
+		touch_info.identifier = (unsigned int)touch->get_index();
+		touch_info.position = Rml::Vector2f(
+			touch->get_position().x,
+			touch->get_position().y
+		);
 		Rml::TouchList list;
-		list.push_back(Rml::Touch {
-			.identifier = (unsigned int)touch->get_index(),
-			.position = Rml::Vector2f(
-				touch->get_position().x,
-				touch->get_position().y
-			)
-		});
+		list.push_back(touch_info);
 		if (touch->is_canceled()){
 			propagated = doc_data->ctx->ProcessTouchCancel(list);
 		} else if (touch->is_pressed()) {
@@ -299,14 +299,14 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 
 	Ref<InputEventScreenDrag> drag = p_event;
 	if (drag.is_valid()) {
+		Rml::Touch touch_info;
+		touch_info.identifier = (unsigned int)drag->get_index();
+		touch_info.position = Rml::Vector2f(
+			drag->get_position().x,
+			drag->get_position().y
+		);
 		Rml::TouchList list;
-		list.push_back(Rml::Touch {
-			.identifier = (unsigned int)drag->get_index(),
-			.position = Rml::Vector2f(
-				drag->get_position().x,
-				drag->get_position().y
-			)
-		});
+		list.push_back(touch_info);
 		propagated = doc_data->ctx->ProcessTouchMove(list, 0);
 	}
 

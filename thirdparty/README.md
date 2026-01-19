@@ -74,6 +74,7 @@ Files extracted from upstream source:
 
 - `Include` and `Source` folders, except `Include/RmlUi/Debugger` and `Source/Debugger` folders
 - `LICENSE.txt`
+- Made change to Source/Core/LogDefault.cpp, removing debug log for default log interface.
 
 
 ## zlib
