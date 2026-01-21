@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="RMLServer" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Server for creating and manipulating RmlUi documents.
 	</brief_description>
 	<description>
+		Allows direct access for RmlUi document manipulation, including loading document files, creating elements, processing events and updating documents. 
 	</description>
 	<tutorials>
 	</tutorials>

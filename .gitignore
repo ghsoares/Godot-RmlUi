@@ -3,11 +3,11 @@
 /android/
 libs/
 bin/
-docs/
-__pycache__/
+**/__pycache__/
 *.obj
 *.dblite
 *.o
 *.os
 *.a
 *.gen*
+temp/

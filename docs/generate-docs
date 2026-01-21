@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cd gdex-doc-gen
+python3 -m venv .env
+. .env/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+./generator.py "Godot RmlUi" ../../doc_classes ../
+deactivate

@@ -2,3 +2,6 @@
 	path = godot-cpp
 	url = https://github.com/godotengine/godot-cpp
 	branch = 4.5
+[submodule "docs/gdex-doc-gen"]
+	path = docs/gdex-doc-gen
+	url = https://github.com/ghsoares/gdex-doc-gen.git
