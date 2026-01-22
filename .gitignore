@@ -3,6 +3,7 @@
 /android/
 libs/
 bin/
+docs/
 **/__pycache__/
 *.obj
 *.dblite
