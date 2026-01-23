@@ -11,6 +11,8 @@ on:
 
 jobs:
   build:
+    name: "Build GDExtension"
+
     strategy:
       fail-fast: false
       matrix:
@@ -101,6 +103,8 @@ jobs:
           path: ${{ github.workspace }}/artifact/
 
   merge:
+    name: "Merge build artifacts"
+
     runs-on: ubuntu-22.04
     needs: build
     steps:
