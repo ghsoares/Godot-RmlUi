@@ -25,17 +25,13 @@ class RMLServer: public Object {
 	struct DocumentData {
 		Rml::Context *ctx;
 		Rml::ElementDocument *doc;
-		RID canvas_item;
 		RenderFrame *render_frame;
 		Input::CursorShape cursor_shape = Input::CURSOR_ARROW;
 	};
 
 	RID_Owner<DocumentData> document_owner;
 
-	void render();
-
-	RID initialize_document(const RID &p_canvas_item);
-	void free_render_frame(uint64_t p_frame);
+	RID initialize_document();
 protected:
 	static void _bind_methods();
 	
@@ -46,9 +42,9 @@ public:
 	void initialize();
 	void uninitialize();
 
-	RID create_document(const RID &p_canvas_item);
-	RID create_document_from_rml_string(const RID &p_canvas_item, const String &p_string);
-	RID create_document_from_path(const RID &p_canvas_item, const String &p_path);
+	RID create_document();
+	RID create_document_from_rml_string(const String &p_string);
+	RID create_document_from_path(const String &p_path);
 	Ref<RMLElement> get_document_root(const RID &p_document);
 	Ref<RMLElement> create_element(const RID &p_document, const String &p_tag_name);
 
@@ -57,6 +53,7 @@ public:
 	bool document_process_event(const RID &p_document, const Ref<InputEvent> &p_event);
 	void document_set_cursor_shape(const RID &p_document, const Input::CursorShape &p_shape);
 	Input::CursorShape document_get_cursor_shape(const RID &p_document);
+	void document_draw(const RID &p_document, const RID &p_canvas_item);
 
 	bool load_default_stylesheet(const String &p_path);
 

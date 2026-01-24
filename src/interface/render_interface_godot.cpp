@@ -403,6 +403,25 @@ void RenderInterfaceGodot::allocate_render_frame() {
     target_frame->main_tex = rs->texture_rd_create(target_frame->main_target.color0);
 }
 
+void RenderInterfaceGodot::free_render_frame(RenderFrame *p_frame) {
+    RenderingServer *rs = RenderingServer::get_singleton();
+    
+    free_render_target(&p_frame->main_target);
+    free_render_target(&p_frame->primary_filter_target);
+    free_render_target(&p_frame->secondary_filter_target);
+    free_render_target(&p_frame->blend_mask_target);
+    
+    if (p_frame->clip_mask_framebuffer.is_valid()) {
+        rendering_resources.free_framebuffer(p_frame->clip_mask_framebuffer);
+    }
+    if (p_frame->clip_mask.is_valid()) {
+        rendering_resources.free_texture(p_frame->clip_mask);
+    }
+    if (p_frame->main_tex.is_valid()) {
+        rs->free_rid(p_frame->main_tex);
+    }
+}
+
 void RenderInterfaceGodot::blit_texture(const RID &p_dst, const RID &p_src, const Vector2i &p_dst_pos, const Vector2i &p_src_pos, const Vector2i &p_size) {
     RD *rd = internal_rendering_resources.device();
 
@@ -428,22 +447,6 @@ void RenderInterfaceGodot::blit_texture(const RID &p_dst, const RID &p_src, cons
 
     rd->draw_list_draw(draw_list, false, 1, 3);
     rd->draw_list_end();
-}
-
-void RenderInterfaceGodot::free_render_frame(RenderFrame *p_frame) {
-    RenderingServer *rs = RenderingServer::get_singleton();
-
-    free_render_target(&p_frame->main_target);
-    free_render_target(&p_frame->primary_filter_target);
-    free_render_target(&p_frame->secondary_filter_target);
-    free_render_target(&p_frame->blend_mask_target);
-
-    if (p_frame->clip_mask_framebuffer.is_valid()) {
-        rendering_resources.free_framebuffer(p_frame->clip_mask_framebuffer);
-    }
-    if (p_frame->clip_mask.is_valid()) {
-        rendering_resources.free_texture(p_frame->clip_mask);
-    }
 }
 
 void RenderInterfaceGodot::set_render_frame(RenderFrame *p_frame) {

@@ -26,6 +26,10 @@ void RMLDocument::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_PROCESS: {
 			update();
+			queue_redraw();
+		} break;
+		case NOTIFICATION_DRAW: {
+			RMLServer::get_singleton()->document_draw(rid, get_canvas_item());
 		} break;
 		case NOTIFICATION_RESIZED: {
 			RMLServer::get_singleton()->document_set_size(rid, Vector2i(
@@ -57,7 +61,7 @@ void RMLDocument::new_document() {
 	if (rid.is_valid()) {
 		RMLServer::get_singleton()->free_rid(rid);
 	}
-	rid = RMLServer::get_singleton()->create_document(get_canvas_item());
+	rid = RMLServer::get_singleton()->create_document();
 	RMLServer::get_singleton()->document_set_size(rid, get_size());
 }
 
@@ -65,7 +69,7 @@ void RMLDocument::load_from_rml_string(const String &p_rml) {
 	if (rid.is_valid()) {
 		RMLServer::get_singleton()->free_rid(rid);
 	}
-	rid = RMLServer::get_singleton()->create_document_from_rml_string(get_canvas_item(), p_rml);
+	rid = RMLServer::get_singleton()->create_document_from_rml_string(p_rml);
 	RMLServer::get_singleton()->document_set_size(rid, get_size());
 }
 
@@ -73,7 +77,7 @@ void RMLDocument::load_from_path(const String &p_path) {
 	if (rid.is_valid()) {
 		RMLServer::get_singleton()->free_rid(rid);
 	}
-	rid = RMLServer::get_singleton()->create_document_from_path(get_canvas_item(), p_path);
+	rid = RMLServer::get_singleton()->create_document_from_path(p_path);
 	RMLServer::get_singleton()->document_set_size(rid, get_size());
 }
 
