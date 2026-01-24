@@ -14,6 +14,7 @@
 #include "../interface/system_interface_godot.h"
 #include "../plugin/rml_godot_plugin.h"
 #include "../rml_util.h"
+#include "../util.h"
 #include "../project_settings.h"
 #include "rml_server.h"
 
@@ -41,8 +42,6 @@ void RMLServer::load_resources() {
 }
 
 void RMLServer::initialize() {
-	RenderingServer::get_singleton()->connect("frame_pre_draw", callable_mp(this, &RMLServer::render));
-
 	RenderInterfaceGodot *ri = RenderInterfaceGodot::get_singleton();
 	ri->initialize();
 
@@ -56,7 +55,7 @@ void RMLServer::uninitialize() {
 	Rml::Log::Message(Rml::Log::LT_INFO, "RMLServer uninitialized.");
 }
 
-RID RMLServer::initialize_document(const RID &p_canvas_item) {
+RID RMLServer::initialize_document() {
 	RID new_rid = document_owner.make_rid();
 	std::stringstream context_str;
 	context_str << "godot_context_" << new_rid.get_id();
@@ -77,8 +76,8 @@ RID RMLServer::initialize_document(const RID &p_canvas_item) {
 	return new_rid;
 }
 
-RID RMLServer::create_document(const RID &p_canvas_item) {
-	RID new_rid = initialize_document(p_canvas_item);
+RID RMLServer::create_document() {
+	RID new_rid = initialize_document();
 	ERR_FAIL_COND_V(!new_rid.is_valid(), RID());
 	DocumentData *doc_data = document_owner.get_or_null(new_rid);
 
@@ -92,13 +91,11 @@ RID RMLServer::create_document(const RID &p_canvas_item) {
 
 	doc_data->doc->Show();
 
-	doc_data->canvas_item = p_canvas_item;
-
 	return new_rid;
 }
 
-RID RMLServer::create_document_from_rml_string(const RID &p_canvas_item, const String &p_string) {
-	RID new_rid = initialize_document(p_canvas_item);
+RID RMLServer::create_document_from_rml_string(const String &p_string) {
+	RID new_rid = initialize_document();
 	ERR_FAIL_COND_V(!new_rid.is_valid(), RID());
 	DocumentData *doc_data = document_owner.get_or_null(new_rid);
 
@@ -112,13 +109,11 @@ RID RMLServer::create_document_from_rml_string(const RID &p_canvas_item, const S
 
 	doc_data->doc->Show();
 
-	doc_data->canvas_item = p_canvas_item;
-
 	return new_rid;
 }
 
-RID RMLServer::create_document_from_path(const RID &p_canvas_item, const String &p_path) {
-	RID new_rid = initialize_document(p_canvas_item);
+RID RMLServer::create_document_from_path(const String &p_path) {
+	RID new_rid = initialize_document();
 	ERR_FAIL_COND_V(!new_rid.is_valid(), RID());
 	DocumentData *doc_data = document_owner.get_or_null(new_rid);
 
@@ -131,8 +126,6 @@ RID RMLServer::create_document_from_path(const RID &p_canvas_item, const String 
 	}
 
 	doc_data->doc->Show();
-
-	doc_data->canvas_item = p_canvas_item;
 
 	return new_rid;
 }
@@ -329,6 +322,34 @@ Input::CursorShape RMLServer::document_get_cursor_shape(const RID &p_document) {
 	return doc_data->cursor_shape;
 }
 
+void RMLServer::document_draw(const RID &p_document, const RID &p_canvas_item) {
+	ERR_FAIL_COND(!document_owner.owns(p_document));
+	DocumentData *doc_data = document_owner.get_or_null(p_document);
+	ERR_FAIL_NULL(doc_data);
+
+	RenderingServer *rs = RenderingServer::get_singleton();
+	RenderInterfaceGodot *ri = RenderInterfaceGodot::get_singleton();
+
+	Vector2i size = Vector2i(
+		doc_data->ctx->GetDimensions().x,
+		doc_data->ctx->GetDimensions().y
+	);
+	if (size.x <= 0 || size.y <= 0) {
+		return;
+	}
+
+	doc_data->render_frame->desired_size = size;
+	ri->set_render_frame(doc_data->render_frame);
+	doc_data->ctx->Render();
+	ri->set_render_frame(nullptr);
+
+	rs->canvas_item_add_texture_rect(
+		p_canvas_item,
+		Rect2(0, 0, size.x, size.y),
+		doc_data->render_frame->get_texture()
+	);
+}
+
 bool RMLServer::load_default_stylesheet(const String &p_path) {
 	Rml::SharedPtr<Rml::StyleSheetContainer> ss = Rml::Factory::InstanceStyleSheetFile(godot_to_rml_string(p_path));
 	ERR_FAIL_NULL_V(ss, false);
@@ -352,76 +373,32 @@ bool RMLServer::load_font_face_from_buffer(const PackedByteArray &p_buffer, cons
 	);
 }
 
-void RMLServer::free_render_frame(uint64_t p_frame) {
-	RenderFrame *frame = reinterpret_cast<RenderFrame *>(p_frame);
-
-	RenderInterfaceGodot *ri = RenderInterfaceGodot::get_singleton();
-	ri->free_render_frame(frame);
-
-	memdelete(frame);
-}
-
 void RMLServer::free_rid(const RID &p_rid) {
 	if (document_owner.owns(p_rid)) {
 		DocumentData *doc_data = document_owner.get_or_null(p_rid);
 		Rml::RemoveContext(doc_data->ctx->GetName());
-
-		RenderingServer *rs = RenderingServer::get_singleton();
+		
+		RenderInterfaceGodot *ri = RenderInterfaceGodot::get_singleton();
 		if (doc_data->render_frame->is_valid()) {
-			rs->call_on_render_thread(callable_mp(this, &RMLServer::free_render_frame).bind(reinterpret_cast<uint64_t>(doc_data->render_frame)));
+			ri->free_render_frame(doc_data->render_frame);
 		}
-
+		
 		document_owner.free(p_rid);
 	}
 }
 
-void RMLServer::render() {
-	RenderingServer *rs = RenderingServer::get_singleton();
-	if (!rs->is_on_render_thread()) {
-		rs->call_on_render_thread(callable_mp(this, &RMLServer::render));
-		return;
-	}
-	
-	RenderInterfaceGodot *ri = RenderInterfaceGodot::get_singleton();
-
-	List<RID> contexts;
-	document_owner.get_owned_list(&contexts);
-	for (RID doc_rid : contexts) {
-		DocumentData *doc = document_owner.get_or_null(doc_rid);
-		doc->ctx->Update();
-
-		rs->canvas_item_clear(doc->canvas_item);
-
-		Vector2i size = Vector2i(
-			doc->ctx->GetDimensions().x,
-			doc->ctx->GetDimensions().y
-		);
-		if (size.x <= 0 || size.y <= 0) {
-			continue;
-		}
-
-		doc->render_frame->desired_size = size;
-
-		ri->set_render_frame(doc->render_frame);
-		doc->ctx->Render();
-		ri->set_render_frame(nullptr);
-		rs->canvas_item_add_texture_rect(
-			doc->canvas_item, 
-			Rect2(0, 0, size.x, size.y),
-			doc->render_frame->get_texture()
-		);
-	}
-}
-
 void RMLServer::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("create_document", "canvas_item"), &RMLServer::create_document);
-	ClassDB::bind_method(D_METHOD("create_document_from_rml_string", "canvas_item", "rml"), &RMLServer::create_document_from_rml_string);
-	ClassDB::bind_method(D_METHOD("create_document_from_path", "canvas_item", "path"), &RMLServer::create_document_from_path);
+	ClassDB::bind_method(D_METHOD("create_document"), &RMLServer::create_document);
+	ClassDB::bind_method(D_METHOD("create_document_from_rml_string", "rml"), &RMLServer::create_document_from_rml_string);
+	ClassDB::bind_method(D_METHOD("create_document_from_path", "path"), &RMLServer::create_document_from_path);
 	ClassDB::bind_method(D_METHOD("get_document_root", "document"), &RMLServer::get_document_root);
 	ClassDB::bind_method(D_METHOD("create_element", "document", "tag_name"), &RMLServer::create_element);
 	
 	ClassDB::bind_method(D_METHOD("document_set_size", "document", "size"), &RMLServer::document_set_size);
 	ClassDB::bind_method(D_METHOD("document_process_event", "document", "event"), &RMLServer::document_process_event);
+
+	ClassDB::bind_method(D_METHOD("document_update", "document"), &RMLServer::document_update);
+	ClassDB::bind_method(D_METHOD("document_draw", "document"), &RMLServer::document_draw);
 
 	ClassDB::bind_method(D_METHOD("load_font_face_from_path", "path", "fallback_face"), &RMLServer::load_font_face_from_path, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("load_font_face_from_buffer", "buffer", "family", "fallback_face", "is_italic"), &RMLServer::load_font_face_from_buffer, DEFVAL(false), DEFVAL(false));
