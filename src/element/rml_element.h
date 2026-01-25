@@ -3,70 +3,12 @@
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <RmlUi/Core.h>
 
+#include "rml_element_ref.h"
+
 namespace godot {
 
 class RMLServer;
 class RMLDocument;
-
-using element_ptr = Rml::ElementPtr;
-
-struct ElementRef {
-	element_ptr owned;
-	Rml::Element *attached = nullptr;
-
-	Rml::Element *get() const {
-		return attached ? attached : owned.get();
-	}
-
-	bool is_attached() const {
-		return attached != nullptr;
-	}
-
-	bool is_valid() const {
-		return get() != nullptr;
-	}
-
-	element_ptr pop_owned() {
-		element_ptr ptr = std::move(owned);
-		owned = nullptr;
-		return ptr;
-	}
-
-	Rml::Element *pop_attached() {
-		Rml::Element *ptr = attached;
-		attached = nullptr;
-		return ptr;
-	}
-
-	_FORCE_INLINE_ void operator=(ElementRef &p_ref) {
-		owned = p_ref.pop_owned();
-		attached = p_ref.attached;
-	}
-
-	_FORCE_INLINE_ bool operator==(const Rml::Element *p_ptr) const {
-		return get() == p_ptr;
-	}
-
-	_FORCE_INLINE_ Rml::Element *operator*() const {
-		return get();
-	}
-
-	_FORCE_INLINE_ Rml::Element *operator->() const {
-		return get();
-	}
-
-	_FORCE_INLINE_ Rml::Element *ptr() const {
-		return get();
-	}
-
-	_FORCE_INLINE_ ElementRef() {}
-	_FORCE_INLINE_ ElementRef(ElementRef &ref) {
-		owned = ref.pop_owned();
-		attached = ref.attached;
-	}
-	_FORCE_INLINE_ ElementRef(Rml::Element *el): attached(el) {}
-	_FORCE_INLINE_ ElementRef(Rml::ElementPtr el): owned(std::move(el)) {}
-};
 
 class RMLElement: public RefCounted {
 	GDCLASS(RMLElement, RefCounted);
@@ -126,7 +68,8 @@ public:
 	Rml::Element *get_element() const;
 
 	static Ref<RMLElement> ref(ElementRef &ref);
-	static Ref<RMLElement> ref(ElementRef &&ref);
+	static Ref<RMLElement> ref(Rml::ElementPtr &&el);
+	static Ref<RMLElement> ref(Rml::Element *el);
 	static Ref<RMLElement> empty();
 
 	RMLElement(): element(nullptr) {}

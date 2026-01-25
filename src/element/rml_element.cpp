@@ -22,8 +22,7 @@ void RMLElement::append_child(const Ref<RMLElement> &p_child) {
 	ENSURE_VALID(p_child);
 	ERR_FAIL_COND(p_child->element->GetParentNode() != nullptr);
 	
-	Rml::Element *el = element->AppendChild(p_child->element.pop_owned());
-	p_child->element.attached = el;
+	element->AppendChild(p_child->element.pop_owned());
 }
 
 void RMLElement::remove_child(const Ref<RMLElement> &p_child) {
@@ -31,8 +30,8 @@ void RMLElement::remove_child(const Ref<RMLElement> &p_child) {
 	ENSURE_VALID(p_child);
 	ERR_FAIL_COND(p_child->element->GetParentNode() != element.get());
 
-	Rml::ElementPtr el = element->RemoveChild(p_child->element.pop_attached());
-	p_child->element.owned = std::move(el);
+	Rml::ElementPtr el = element->RemoveChild(p_child->element.get());
+	p_child->element.push_owner(std::move(el));
 }
 
 Ref<RMLElement> RMLElement::query_selector(const String &p_selector) const {
@@ -256,10 +255,17 @@ Ref<RMLElement> RMLElement::ref(ElementRef &ref) {
 	return ret;
 }
 
-Ref<RMLElement> RMLElement::ref(ElementRef &&ref) {
+Ref<RMLElement> RMLElement::ref(Rml::ElementPtr &&el) {
 	Ref<RMLElement> ret;
 	ret.instantiate();
-	ret->element = ref;
+	ret->element = ElementRef(std::move(el));
+	return ret;
+}
+
+Ref<RMLElement> RMLElement::ref(Rml::Element *el) {
+	Ref<RMLElement> ret;
+	ret.instantiate();
+	ret->element = ElementRef(el);
 	return ret;
 }
 
