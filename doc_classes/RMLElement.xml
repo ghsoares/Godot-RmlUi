@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RMLElement" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A reference to a element in a [class RMLDocument] document.
+	</brief_description>
+	<description>
+		This class references a element inside a document and allows direct modification to class names, id, attributes and style properties, as well adding and removing childs.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="add_event_listener">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<param index="1" name="listener" type="Callable" />
+			<description>
+				Listens to the element event with name [param event_id].
+				[param listener] is called with a [class Dictionary] with the information about the event along with the following keys:
+				[code]type[/code]: The type of the event, is equal to [param event_id];
+				[code]target_element[/code]: The target element which first triggered the event;
+				[code]current_element[/code]: Current element which receives the event;
+				Along with the event information, you can stop propagation of the event adding the key [code]stop_propagation[/code] or [code]stop_immediate_propagation[/code] to [code]true[/code].
+			</description>
+		</method>
+		<method name="append_child">
+			<return type="void" />
+			<param index="0" name="child" type="RMLElement" />
+			<description>
+				Appends [param child] as a child of this element.
+			</description>
+		</method>
+		<method name="clear_children">
+			<return type="void" />
+			<description>
+				Clears all the children of this element.
+			</description>
+		</method>
+		<method name="get_attribute" qualifiers="const">
+			<return type="Variant" />
+			<param index="0" name="name" type="String" />
+			<param index="1" name="default_value" type="Variant" default="null" />
+			<description>
+				Gets the attribute [param name], if the element doesn't have this attribute, returns [param default_value].
+			</description>
+		</method>
+		<method name="get_child" qualifiers="const">
+			<return type="RMLElement" />
+			<param index="0" name="index" type="int" />
+			<description>
+				Returns the child at [param index].
+			</description>
+		</method>
+		<method name="get_child_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the number of children this element have.
+			</description>
+		</method>
+		<method name="get_children" qualifiers="const">
+			<return type="RMLElement[]" />
+			<description>
+				Returns the list of children of this element.
+			</description>
+		</method>
+		<method name="get_class_names" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the list of class names of this element.
+			</description>
+		</method>
+		<method name="get_id" qualifiers="const">
+			<return type="String" />
+			<description>
+				Gets the ID of this element.
+			</description>
+		</method>
+		<method name="get_inner_rml" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the inner RML of this element.
+			</description>
+		</method>
+		<method name="get_parent" qualifiers="const">
+			<return type="RMLElement" />
+			<description>
+				Returns the parent of this element.
+			</description>
+		</method>
+		<method name="get_property" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="name" type="String" />
+			<param index="1" name="default_value" type="String" default="&quot;&quot;" />
+			<description>
+				Gets the style property [param name], if the element doesn't have this property, returns [param default_value].
+			</description>
+		</method>
+		<method name="get_rect" qualifiers="const">
+			<return type="Rect2" />
+			<description>
+				Returns the bounding rectangle of this element in document space.
+			</description>
+		</method>
+		<method name="get_tag_name" qualifiers="const">
+			<return type="String" />
+			<description>
+				Gets the tag name of this element.
+			</description>
+		</method>
+		<method name="get_text_content" qualifiers="const">
+			<return type="PackedStringArray" />
+			<description>
+				Returns a list of text from text nodes as direct or indirect child.
+			</description>
+		</method>
+		<method name="has_class" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="name" type="String" />
+			<description>
+				Returns [code]true[/code] if this element has [param class].
+			</description>
+		</method>
+		<method name="is_valid" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] when this RMLElement references a valid element.
+				[b]Note:[/b] The methods on this class never returns an [code]null[/code] RMLElement, but the object can reference a null element in RmlUi. 
+				In this case, if the GDExtension is built with [code]element_reference_strict=no[/code] flag which is the default, the methods does nothing and/or returns default values. 
+				Enabling the flag throws errors on runtime when trying to manipulate a invalid reference.
+			</description>
+		</method>
+		<method name="query_selector" qualifiers="const">
+			<return type="RMLElement" />
+			<param index="0" name="selector" type="String" />
+			<description>
+				Selects the first direct or indirect child of this element which matches [param selector].
+			</description>
+		</method>
+		<method name="query_selector_all" qualifiers="const">
+			<return type="RMLElement[]" />
+			<param index="0" name="selector" type="String" />
+			<description>
+				Selects all direct and indirect childs of this element which matches [param selector].
+			</description>
+		</method>
+		<method name="remove_attribute">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<description>
+				Removes attribute [param name] from the element.
+			</description>
+		</method>
+		<method name="remove_child">
+			<return type="void" />
+			<param index="0" name="child" type="RMLElement" />
+			<description>
+				Removes [param child] as a child of this element.
+			</description>
+		</method>
+		<method name="remove_class">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<description>
+				Toggles [param class] from the list of class names of this element.
+			</description>
+		</method>
+		<method name="remove_event_listener">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<param index="1" name="listener" type="Callable" />
+			<description>
+				Removes the [param listener] as a listener of the event with name [param event_id].
+			</description>
+		</method>
+		<method name="remove_property">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<description>
+				Removes style property [param name] from the element.
+			</description>
+		</method>
+		<method name="set_attribute">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<param index="1" name="value" type="Variant" />
+			<description>
+				Sets attribute [param name] to [param value].
+			</description>
+		</method>
+		<method name="set_class">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<description>
+				Adds [param class] in the list of class names of this element.
+			</description>
+		</method>
+		<method name="set_class_names">
+			<return type="void" />
+			<param index="0" name="names" type="String" />
+			<description>
+				Sets the list of class names of this element to [param class_names].
+			</description>
+		</method>
+		<method name="set_id">
+			<return type="void" />
+			<param index="0" name="id" type="String" />
+			<description>
+				Sets the ID of this element to [param id].
+			</description>
+		</method>
+		<method name="set_inner_rml">
+			<return type="void" />
+			<param index="0" name="rml" type="String" />
+			<description>
+				Sets the inner RML of this element, clears all it's children and replaces then with new elements based on [param rml].
+			</description>
+		</method>
+		<method name="set_property">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<param index="1" name="value" type="String" />
+			<description>
+				Sets style property [param name] to [param value].
+			</description>
+		</method>
+		<method name="set_text_content">
+			<return type="void" />
+			<param index="0" name="text" type="String" />
+			<description>
+				Sets the text content of this element, clears all it's children and replaces then with a single text element with [param text] as it's content.
+			</description>
+		</method>
+		<method name="toggle_class">
+			<return type="void" />
+			<param index="0" name="name" type="String" />
+			<description>
+				Toggles [param class] in the list of class names of this element.
+			</description>
+		</method>
+	</methods>
+</class>

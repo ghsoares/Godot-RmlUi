@@ -13,15 +13,14 @@ void main() {
 #[fragment]
 #version 450 core
 
-layout(set = 0, binding = 0) uniform sampler2D screen;
+layout(set = 0, binding = 0) uniform sampler2D source;
 
 layout(location = 0) out vec4 o_color;
-
 
 layout(push_constant, std430) uniform GeometryData {
 	ivec2 offset;
 } params;
 
 void main() {
-    o_color = texelFetch(screen, ivec2(gl_FragCoord.xy) + params.offset, 0);
+    o_color = texelFetch(source, ivec2(gl_FragCoord.xy) + params.offset, 0);
 }

@@ -3,7 +3,7 @@
 #include "project_settings.h"
 
 #include "interface/system_interface_godot.h"
-#include "interface/texture_render_interface_godot.h"
+#include "interface/rd_render_interface_godot.h"
 #include "interface/file_interface_godot.h"
 #include "element/rml_document.h"
 #include "element/rml_element.h"
@@ -28,7 +28,7 @@ static RMLServer *rml_server = nullptr;
 
 void initialize_rmlui() {
     static SystemInterfaceGodot system;
-    static TextureRenderInterfaceGodot render;
+    static RDRenderInterfaceGodot render;
     static FileInterfaceGodot file;
 	static RmlPluginGodot plugin;
 	

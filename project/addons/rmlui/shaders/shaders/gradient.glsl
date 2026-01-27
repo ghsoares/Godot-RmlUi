@@ -40,6 +40,12 @@ layout(location = 0) out vec4 o_color;
 
 #define TYPE_NONE 0
 #define TYPE_LINEAR_GRADIENT 1
+#define TYPE_RADIAL_GRADIENT 2
+#define TYPE_CONIC_GRADIENT 3
+
+#define PI 3.14159265359
+#define TAU 6.28318530718
+#define INV_TAU 0.15915494309
 
 layout(push_constant, std430) uniform GeometryData {
 	vec2 inv_viewport_size;
@@ -51,7 +57,7 @@ layout(push_constant, std430) uniform GeometryData {
 	vec2 v;
 } geometry_data;
 
-layout(std430, binding = 0) buffer GradientBuffer {
+layout(std430, set = 0, binding = 1) buffer GradientBuffer {
 	// List of rgba + position
     float values[];
 } gradient_buffer;
@@ -90,11 +96,20 @@ void main() {
 	if (type == TYPE_LINEAR_GRADIENT) {
 		float dsq = dot(geometry_data.v, geometry_data.v);
 		vec2 v = i_uv - geometry_data.p;
-		t = dot(v, geometry_data.v) / dsq;
+		t = dot(geometry_data.v, v) / dsq;
+	} else if (type == TYPE_RADIAL_GRADIENT) {
+		vec2 v = i_uv - geometry_data.p;
+		t = length(geometry_data.v * v);
+	} else if (type == TYPE_CONIC_GRADIENT) {
+		mat2 r = mat2(geometry_data.v.x, -geometry_data.v.y, geometry_data.v.y, geometry_data.v.x);
+		vec2 v = r * (i_uv - geometry_data.p);
+		t = 0.5 + atan(-v.x, v.y) * INV_TAU;
 	}
 
-	if (!repeating) {
-		t = clamp(t, 0.0, 1.0);
+	if (repeating) {
+		float t0 = gradient_buffer.values[4];
+		float t1 = gradient_buffer.values[geometry_data.stop_count * 5 - 1];
+		t = t0 + mod(t - t0, t1 - t0);
 	}
 
 	o_color = i_color * mix_stop_colors(t);

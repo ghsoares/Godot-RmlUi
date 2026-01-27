@@ -28,8 +28,6 @@ void main() {
 #[fragment]
 #version 450 core
 
-#include "common.glsl.inc"
-
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_color;
 
@@ -40,17 +38,8 @@ layout(push_constant, std430) uniform GeometryData {
 	mat4 transform;
 } geometry_data;
 
-layout(set = 0, binding = 0) uniform sampler2D screen;
-layout(set = 0, binding = 1) uniform sampler2D tex;
+layout(set = 0, binding = 0) uniform sampler2D albedo_tex;
 
 void main() {
-	o_color = texelFetch(screen, ivec2(gl_FragCoord.xy), 0);
-
-	vec4 tex_color = texture(tex, i_uv);
-	tex_color.rgb /= tex_color.a > 0.0 ? tex_color.a : 1.0;
-	vec4 pix_color = tex_color * i_color;
-
-	// Custom alpha blending function, when this pixel is being rendered by the first time,
-	// sets it's color equal to the geometry color, else blend with current color
-	o_color = o_color.a <= 1.0 / 256.0 ? pix_color : blend_mix(o_color, pix_color);
+	o_color = texture(albedo_tex, i_uv) * i_color;
 }

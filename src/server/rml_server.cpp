@@ -62,15 +62,13 @@ RID RMLServer::initialize_document() {
 	ERR_FAIL_NULL_V_MSG(ri, RID(), "Render interface configured is not of type RenderInterfaceGodot");
 
 	RID new_rid = document_owner.make_rid();
-	std::stringstream context_str;
-	context_str << "godot_context_" << new_rid.get_id();
-	
+	String context_id = vformat("godot_context_%d", new_rid.get_id());
 	DocumentData *doc_data = document_owner.get_or_null(new_rid);
 	doc_data->ctx = Rml::CreateContext(
-		context_str.str(),
+		godot_to_rml_string(context_id),
 		Rml::Vector2i(1, 1)
 	);
-
+	
 	if (doc_data->ctx == nullptr) {
 		document_owner.free(new_rid);
 		ERR_FAIL_V_MSG(RID(), "Couldn't create the context");
@@ -219,14 +217,22 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 					);
 				} break;
 				case MouseButton::MOUSE_BUTTON_WHEEL_UP: {
+					Rml::Vector2f delta = Rml::Vector2f(0.0, -1.0);
+					if (mb->get_modifiers_mask() && KeyModifierMask::KEY_MASK_SHIFT) {
+						delta = Rml::Vector2f(-1.0, 0.0);
+					}
 					propagated = doc_data->ctx->ProcessMouseWheel(
-						1.0,
+						delta,
 						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
 					);
 				} break;
 				case MouseButton::MOUSE_BUTTON_WHEEL_DOWN: {
+					Rml::Vector2f delta = Rml::Vector2f(0.0, 1.0);
+					if (mb->get_modifiers_mask() && KeyModifierMask::KEY_MASK_SHIFT) {
+						delta = Rml::Vector2f(1.0, 0.0);
+					}
 					propagated = doc_data->ctx->ProcessMouseWheel(
-						-1.0,
+						delta,
 						godot_to_rml_key_modifiers(mb->get_modifiers_mask())
 					);
 				} break;
@@ -332,8 +338,6 @@ void RMLServer::document_draw(const RID &p_document, const RID &p_canvas_item) {
 	ERR_FAIL_COND(!document_owner.owns(p_document));
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL(doc_data);
-
-	RenderingServer *rs = RenderingServer::get_singleton();
 
 	Vector2i size = Vector2i(
 		doc_data->ctx->GetDimensions().x,

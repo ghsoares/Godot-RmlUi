@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RMLDocument" inherits="Control" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Node for loading and manipulating RmlUi documents.
+	</brief_description>
+	<description>
+		RMLDocument is the main node for loading and manipulating RmlUi documents.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="as_element" qualifiers="const">
+			<return type="RMLElement" />
+			<description>
+				Returns an [class RMLElement] element reference to the root element of this document.
+			</description>
+		</method>
+		<method name="create_element" qualifiers="const">
+			<return type="RMLElement" />
+			<param index="0" name="tag_name" type="String" />
+			<description>
+				Creates a new element and returns an [class RMLElement] reference to it.
+			</description>
+		</method>
+		<method name="load_from_path">
+			<return type="void" />
+			<param index="0" name="path" type="String" />
+			<description>
+				Creates a new document and load the source from [param path].
+			</description>
+		</method>
+		<method name="load_from_rml_string">
+			<return type="void" />
+			<param index="0" name="rml_string" type="String" />
+			<description>
+				Creates a new document and load the source from [param rml_string] which must be a valid RML document.
+			</description>
+		</method>
+		<method name="new_document">
+			<return type="void" />
+			<description>
+				Creates a new empty document.
+			</description>
+		</method>
+		<method name="update">
+			<return type="void" />
+			<description>
+				Updates the layout of the document, use this to immediately retrieve layout info after updating elements.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="focus_mode" type="int" setter="set_focus_mode" getter="get_focus_mode" overrides="Control" enum="Control.FocusMode" default="2" />
+	</members>
+</class>

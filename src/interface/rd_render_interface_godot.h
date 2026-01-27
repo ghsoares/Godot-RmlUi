@@ -8,9 +8,8 @@
 
 namespace godot {
 
-class TextureRenderInterfaceGodot: public RenderInterfaceGodot {
-private:
-    struct MeshData {
+class RDRenderInterfaceGodot: public RenderInterfaceGodot {
+	struct MeshData {
         RID position_buffer;
         RID color_buffer;
         RID uv_buffer;
@@ -22,71 +21,73 @@ private:
     struct TextureData {
         RID rid;
         Ref<Texture> tex_ref;
+        bool linear_filtering = true;
     };
 
-    enum BufferTarget {
-        NONE,
-        PRIMARY_BUFFER0, PRIMARY_BUFFER1,
-        SECONDARY_BUFFER0, SECONDARY_BUFFER1,
-        BLEND_BUFFER0, BLEND_BUFFER1
+	struct RenderTarget {
+        RID color;
+        RID framebuffer;
+		Vector2i size;
     };
 
-    struct ShaderRenderData {
-        String name;
+	struct Context {
+		std::vector<RenderTarget *> target_stack;
+		uintptr_t target_stack_ptr = 0;
 
-        struct Pass {
-            RID shader;
-            uint64_t pipeline_id;
-            RID buffer;
-            PackedByteArray push_const;
+		RenderTarget main_target;
+		RenderTarget back_buffer0;
+        RenderTarget back_buffer1;
+        RenderTarget back_buffer2;
+        RenderTarget blend_target;
+		
+		RID main_tex;
+		RID clip_mask, clip_mask_framebuffer;
 
-            BufferTarget src0 = BufferTarget::PRIMARY_BUFFER0;
-            BufferTarget src1 = BufferTarget::NONE;
-            BufferTarget dst = BufferTarget::PRIMARY_BUFFER1;
+		Vector2i size;
 
-            BufferTarget swap0 = BufferTarget::PRIMARY_BUFFER0;
-            BufferTarget swap1 = BufferTarget::PRIMARY_BUFFER1;
-        };
-
-        std::vector<Pass> passes;
-    };
-
-    struct RenderTarget {
-        RID color0, color1;
-        RID framebuffer0, framebuffer1;
-
-        void swap() {
-            SWAP(color0, color1);
-            SWAP(framebuffer0, framebuffer1);
-        }
-    };
-
-    struct RenderFrame {
-        RenderTarget main_target;
-        RenderTarget primary_filter_target;
-        RenderTarget secondary_filter_target;
-        RenderTarget blend_mask_target;
-        RID main_tex;
-
-        RID clip_mask;
-        RID clip_mask_framebuffer;
-
-        Vector2i current_size;
-        Vector2i desired_size;
-
-        bool is_valid() { return main_tex.is_valid(); }
+		bool is_valid() { return main_tex.is_valid(); }
 
         RID get_texture() { return main_tex; }
+	};
+
+	struct RenderPass {
+        String debug_name = "Pass_";
+
+		RID shader;
+		RID pipeline;
+
+		MeshData *mesh_data = nullptr;
+
+		PackedByteArray push_const;
+
+		std::vector<std::pair<RID, bool>> uniform_textures;
+		RID uniform_buffer = RID();
+
+		RID framebuffer;
+
+		BitField<RenderingDevice::DrawFlags> draw_flags = RenderingDevice::DRAW_DEFAULT_ALL;
+		PackedColorArray clear_colors = {};
+		unsigned int clear_stencil = 0;
+        Rect2i region = Rect2i(0, 0, 0, 0);
+	};
+
+    struct RenderPasses {
+        std::vector<RenderPass> passes;
     };
 
-    RenderFrame *target_frame;
-    std::vector<RenderTarget *> render_target_stack;
-    uintptr_t render_target_stack_ptr = 0;
+    struct ShaderInfo {
+        RID shader;
+        RID uniform_buffer = RID();
+        uint64_t pipeline_id;
+        PackedByteArray push_const;
+    };
 
-    RenderingResources internal_rendering_resources;
+	Context *context = nullptr;
+
+	RenderingResources internal_rendering_resources;
     RenderingResources rendering_resources;
 
-    int64_t color_framebuffer_format;
+	int64_t color_framebuffer_format;
     int64_t geometry_framebuffer_format;
     int64_t clip_mask_framebuffer_format;
     int64_t geometry_vertex_format;
@@ -95,6 +96,7 @@ private:
     RID shader_geometry;
     RID shader_clip_mask;
     RID shader_layer_composition;
+    RID shader_post_process;
 
     RID pipeline_blit;
     RID pipeline_geometry;
@@ -103,14 +105,16 @@ private:
     RID pipeline_clip_mask_set_inverse;
     RID pipeline_clip_mask_intersect;
     RID pipeline_layer_composition;
+    RID pipeline_post_process;
 
     std::map<uint64_t, RID> shaders;
-    std::map<uint64_t, std::tuple<RID, RID>> pipelines;
+    std::map<uint64_t, RID> pipelines;
+    std::map<uint64_t, std::tuple<RID, RID>> pipelines_with_clip;
 
     RID sampler_nearest;
     RID sampler_linear;
 
-    RID texture_white;
+    RID texture_white, texture_transparent;
 
     bool scissor_enabled = false;
     Rect2 scissor_region = Rect2();
@@ -118,23 +122,24 @@ private:
 
     Rml::Matrix4f drawing_matrix = Rml::Matrix4f::Identity();
 
-    Rml::Matrix4f get_final_transform(const Rml::Matrix4f &p_drawing_matrix, const Rml::Vector2f &translation);
-    void matrix_to_pointer(float *ptr, const Rml::Matrix4f &p_mat);
-    RID *filter_get_texture(RenderFrame *frame, const BufferTarget &target);
-    RID *filter_get_framebuffer(RenderFrame *frame, const BufferTarget &target);
+	void create_render_pipeline_with_clip(uint64_t p_id, const std::map<String, Variant> &p_params);
+    RID get_shader_pipeline(uint64_t p_id) const;
 
-    void allocate_render_target(RenderTarget *p_target);
+	RenderTarget *get_render_target();
+	
+	void allocate_render_target(RenderTarget *p_target, const Vector2i &p_size);
     void free_render_target(RenderTarget *p_target);
 
-    void allocate_render_frame(RenderFrame *p_frame);
-    void free_render_frame(RenderFrame *p_frame);
+	void allocate_context(Context *p_context, const Vector2i &p_size);
+	void free_context(Context *p_context);
 
-    void blit_texture(const RID &p_dst, const RID &p_src, const Vector2i &p_dst_pos, const Vector2i &p_src_pos, const Vector2i &p_size);
+	void render_pass(const RenderPass &p_pass);
 
-    void create_shader_pipeline(uint64_t p_id, const std::map<String, Variant> &p_params);
-    RID get_shader_pipeline(uint64_t p_id) const;
+    RenderPass blit_pass(const RID &p_tex, const RID &p_framebuffer, const Vector2i &p_dst_pos = Vector2i(), const Vector2i &p_src_pos = Vector2i(), const Vector2i &p_size = Vector2i());
+
+    bool check_if_can_render_with_scissor() const;
 public:
-    void initialize() override;
+	void initialize() override;
     void finalize() override;
 
     void push_context(void *&p_ctx, const Vector2i &p_size) override;
@@ -159,7 +164,6 @@ public:
     void SetTransform(const Rml::Matrix4f* transform) override;
 
     Rml::LayerHandle PushLayer() override;
-    void RenderFilter(Rml::CompiledFilterHandle filter);
     void CompositeLayers(Rml::LayerHandle source, Rml::LayerHandle destination, Rml::BlendMode blend_mode, Rml::Span<const Rml::CompiledFilterHandle> filters) override;
     void PopLayer() override;
 
@@ -173,6 +177,5 @@ public:
     void RenderShader(Rml::CompiledShaderHandle shader, Rml::CompiledGeometryHandle geometry, Rml::Vector2f translation, Rml::TextureHandle texture) override;
     void ReleaseShader(Rml::CompiledShaderHandle shader) override;
 };
-
 
 }

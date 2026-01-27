@@ -15,7 +15,7 @@ class RMLDocument : public Control {
 	GDCLASS(RMLDocument, Control)
 
 protected:
-	RID rid;
+	RID rid = RID();
 
 	static void _bind_methods();
 

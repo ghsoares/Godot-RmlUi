@@ -21,7 +21,7 @@
 #define GP_STR(x) #x
 #define GP_TOSTR(x) GP_STR(x)
 
-#define DBG_STD_COUT
+// #define DBG_STD_COUT
 
 #ifdef DBG_STD_COUT
 #define DBG() std::cout << __FILE__ << ":" << __FUNCTION_NAME__ << ":" << __LINE__ << std::endl << std::flush;

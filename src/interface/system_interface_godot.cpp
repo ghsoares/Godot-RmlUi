@@ -58,7 +58,7 @@ bool SystemInterfaceGodot::LogMessage(Rml::Log::Type msg_type, const Rml::String
 			UtilityFunctions::print_verbose("[RmlUi] ", msg.c_str());
 		} break;
 		case Rml::Log::Type::LT_DEBUG: {
-			if (OS::get_singleton()->is_debug_build()) {
+			if (OS::get_singleton()->is_stdout_verbose()) {
 				UtilityFunctions::print("[RmlUi] ", msg.c_str());
 			}
 		} break;

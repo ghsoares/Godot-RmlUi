@@ -1,16 +1,22 @@
 extends RMLDocument
 
+@onready var fps_label: Label = $fps
+@onready var next_test_button: Button = $next_test
+
+var average_fps: float = 0.0
+
 func _ready() -> void:
-	load_from_path("res://test.rml")
+	var tests = ["res://tests/rendering_interface.rml"]
 	
-	var doc: RMLElement = as_element()
-	var el: RMLElement = create_element("div")
-	doc.append_child(el)
+	for test in tests:
+		load_from_path(test)
+		await next_test_button.pressed
 	
-	await get_tree().create_timer(1.0).timeout
-	
-	el.set_text_content("Test reference")
-	
-	await get_tree().create_timer(1.0).timeout
-	
-	doc.remove_child(el)
+	print("Tests finished!")
+	get_tree().quit()
+
+func _process(delta: float) -> void:
+	var fps: float = 1.0 / delta
+	average_fps = lerp(average_fps, fps, delta * 8.0)
+	fps_label.text = "Average FPS: %.1f" % average_fps
+

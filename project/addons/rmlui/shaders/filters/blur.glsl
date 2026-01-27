@@ -13,7 +13,7 @@ void main() {
 #[fragment]
 #version 450 core
 
-layout(set = 0, binding = 0) uniform sampler2D screen;
+layout(set = 0, binding = 0) uniform sampler2D source;
 
 layout(location = 0) out vec4 o_color;
 
@@ -24,7 +24,7 @@ layout(push_constant, std430) uniform FilterParams {
 } params;
 
 void main() {
-	vec2 tex_size = textureSize(screen, 0);
+	vec2 tex_size = textureSize(source, 0);
 	vec2 inv_tex_size = 1.0 / tex_size;
 	vec2 uv = (gl_FragCoord.xy - params.off) * inv_tex_size;
 	vec2 dir = params.dir * inv_tex_size;
@@ -41,7 +41,7 @@ void main() {
 
 		vec2 new_uv = uv + dir * t;
 		bool outside = new_uv.x < 0.0 || new_uv.x > 1.0 || new_uv.y < 0.0 || new_uv.y > 1.0;
-		vec4 pix = !outside ? texture(screen, uv + dir * t) : vec4(0.0);
+		vec4 pix = !outside ? texture(source, uv + dir * t) : vec4(0.0);
 		bool transparent = pix.a <= 0.0;
 
 		color = transparent ? color : color + pix.rgb * w;

@@ -67,7 +67,7 @@ Files extracted from upstream source:
 ## rmlui
 
 - Upstream: https://github.com/mikke89/RmlUi
-- Version: 6.2 (2230d1a6e8e0848ed87a5761e2a5160b2a175ba4, 2026)
+- Version: 6.3 (a5ceb26e577b554d074b8a5efe0d4f459adf7970, 2026)
 - License: MIT
 
 Files extracted from upstream source:

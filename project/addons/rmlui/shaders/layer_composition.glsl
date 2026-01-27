@@ -15,8 +15,8 @@ void main() {
 
 #include "common.glsl.inc"
 
-layout(set = 0, binding = 0) uniform sampler2D screen;
-layout(set = 0, binding = 1) uniform sampler2D src_screen;
+layout(set = 0, binding = 0) uniform sampler2D layer0;
+layout(set = 0, binding = 1) uniform sampler2D layer1;
 
 layout(location = 0) out vec4 o_color;
 
@@ -28,12 +28,12 @@ layout(push_constant, std430) uniform GeometryData {
 } params;
 
 void main() {
-    o_color = texelFetch(screen, ivec2(gl_FragCoord.xy), 0);
-	vec4 color = texelFetch(src_screen, ivec2(gl_FragCoord.xy), 0);
+    vec4 color0 = texelFetch(layer0, ivec2(gl_FragCoord.xy), 0);
+	vec4 color1 = texelFetch(layer1, ivec2(gl_FragCoord.xy), 0);
 
 	o_color = params.mode == MODE_BLEND ? (
-		o_color.a < 1.0 / 256.0 ? color : blend_mix(o_color, color)
+		blend_mix(color0, color1)
 	) : (
-		color
+		color1
 	);
 }

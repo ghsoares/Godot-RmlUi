@@ -15,7 +15,7 @@ void main() {
 
 #include "../common.glsl.inc"
 
-layout(set = 0, binding = 0) uniform sampler2D screen;
+layout(set = 0, binding = 0) uniform sampler2D source;
 
 layout(location = 0) out vec4 o_color;
 
@@ -28,7 +28,7 @@ layout(push_constant, std430) uniform FilterParams {
 } params;
 
 void main() {
-    o_color = texelFetch(screen, ivec2(gl_FragCoord.xy), 0);
+    o_color = texelFetch(source, ivec2(gl_FragCoord.xy), 0);
 
 	o_color = params.space == SPACE_HSV ? hue_rotate(o_color, params.modulate.r) : o_color * params.modulate;
 }

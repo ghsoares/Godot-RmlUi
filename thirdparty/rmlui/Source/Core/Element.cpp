@@ -208,7 +208,8 @@ void Element::Render()
 	// Render all elements in our local stacking context.
 	for (Element* element : stacking_context)
 		element->Render();
-
+	
+	ElementUtilities::ApplyTransform(*this);
 	meta->effects.RenderEffects(RenderStage::Exit);
 }
 

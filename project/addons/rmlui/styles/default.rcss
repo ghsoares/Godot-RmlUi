@@ -128,3 +128,29 @@ button:disabled {
 	background-color: #1a1a1a4d;
 	color: #dfdfdf80;
 }
+
+scrollbarvertical {
+	width: 8px;
+}
+
+scrollbarhorizontal {
+	height: 8px;
+}
+
+scrollbarvertical > slidertrack, scrollbarhorizontal > slidertrack {
+	background-color: #1a1a1a99;
+	border-radius: 4px;
+}
+
+scrollbarvertical > sliderbar, scrollbarhorizontal > sliderbar {
+	background-color: #ffffff66;
+	border-radius: 4px;
+}
+
+scrollbarvertical > sliderbar:hover, scrollbarhorizontal > sliderbar:hover {
+	background-color: #ffffffbf;
+}
+
+scrollbarvertical > sliderbar:active, scrollbarhorizontal > sliderbar:active {
+	background-color: #bfbfbfbf;
+}

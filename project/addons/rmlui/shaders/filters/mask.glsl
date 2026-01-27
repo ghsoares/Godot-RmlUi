@@ -13,12 +13,12 @@ void main() {
 #[fragment]
 #version 450 core
 
-layout(set = 0, binding = 0) uniform sampler2D screen;
+layout(set = 0, binding = 0) uniform sampler2D source;
 layout(set = 0, binding = 1) uniform sampler2D mask;
 
 layout(location = 0) out vec4 o_color;
 
 void main() {
-	o_color = texelFetch(screen, ivec2(gl_FragCoord.xy), 0);
+	o_color = texelFetch(source, ivec2(gl_FragCoord.xy), 0);
 	o_color.a *= texelFetch(mask, ivec2(gl_FragCoord.xy), 0).a;
 }

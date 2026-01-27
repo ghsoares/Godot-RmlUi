@@ -17,12 +17,9 @@ layout(set = 0, binding = 0) uniform sampler2D source;
 
 layout(location = 0) out vec4 o_color;
 
-layout(push_constant, std430) uniform FilterParams {
-	mat4 matrix;
-} params;
-
 void main() {
     o_color = texelFetch(source, ivec2(gl_FragCoord.xy), 0);
 
-	o_color = params.matrix * o_color;
+	// Un-multiply to show colors correctly
+	o_color.rgb /= o_color.a > 0 ? o_color.a : 1.0;
 }

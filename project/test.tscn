@@ -1,74 +1,27 @@
-[gd_scene load_steps=5 format=3 uid="uid://djfrrj5e8u1u1"]
+[gd_scene load_steps=2 format=3 uid="uid://djfrrj5e8u1u1"]
 
 [ext_resource type="Script" uid="uid://b6s5y72kvuolt" path="res://test.gd" id="1_37kl0"]
-[ext_resource type="Texture2D" uid="uid://s0cbchxdrn4d" path="res://icon.svg" id="2_8uh7m"]
 
-[sub_resource type="Shader" id="Shader_37kl0"]
-code = "shader_type canvas_item;
-
-uniform float spacing = 16.0;
-uniform vec3 color0: source_color = vec3(1.0);
-uniform vec3 color1: source_color = vec3(1.0);
-
-void fragment() {
-	float idx = floor(VERTEX.x / spacing) + floor(VERTEX.y / spacing);
-	idx = ((idx / 2.0) - floor(idx / 2.0)) * 2.0;
-	COLOR.rgb = mix(color0, color1, idx);
-}
-"
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_8uh7m"]
-shader = SubResource("Shader_37kl0")
-shader_parameter/spacing = 8.0
-shader_parameter/color0 = Color(0.66, 0.66, 0.66, 1)
-shader_parameter/color1 = Color(1, 1, 1, 1)
-
-[node name="test" type="Control"]
-layout_mode = 3
+[node name="test" type="RMLDocument"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="ColorRect" type="ColorRect" parent="."]
-visible = false
-material = SubResource("ShaderMaterial_8uh7m")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="hbox" type="HBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="RMLDocument" type="RMLDocument" parent="hbox"]
-custom_minimum_size = Vector2(128, 32)
-layout_mode = 2
-size_flags_horizontal = 3
 script = ExtResource("1_37kl0")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="hbox"]
-layout_mode = 2
-size_flags_horizontal = 3
+[node name="fps" type="Label" parent="."]
+layout_mode = 1
+offset_right = 60.0
+offset_bottom = 23.0
+text = "FPS: %d"
 
-[node name="Label" type="Label" parent="hbox/VBoxContainer"]
-layout_mode = 2
-text = "Hello!"
-
-[node name="Button" type="Button" parent="hbox/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 0
-text = "Test Button"
-
-[node name="TextureRect" type="TextureRect" parent="hbox/VBoxContainer"]
-layout_mode = 2
-texture = ExtResource("2_8uh7m")
-stretch_mode = 4
+[node name="next_test" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -82.0
+offset_bottom = 31.0
+grow_horizontal = 0
+text = "Next Test"

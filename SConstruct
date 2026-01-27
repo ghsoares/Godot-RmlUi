@@ -10,6 +10,7 @@ env = SConscript("godot-cpp/SConstruct")
 opts = Variables([], ARGUMENTS)
 opts.Add(BoolVariable("svg_plugin", "Build with SVG plugin (LunaSVG)", True))
 opts.Add(BoolVariable("element_reference_strict", "Build with strict RMLElement reference, which throws error when trying to manipulate", False))
+opts.Add(BoolVariable("install_to_project_bin", "After finishing building, will install binaries in the 'project/addons/rmlui/bin' folder", False))
 
 opts.Update(env)
 
@@ -234,11 +235,16 @@ if env["target"] in ["editor", "template_debug"]:
 if env["element_reference_strict"]:
     env.Append(CPPDEFINES=["ELEMENT_REFERENCE_STRICT"])
 
+targets = []
+
 library = env.SharedLibrary(
     "{}/lib{}{}{}".format(bin_folder, module_name, env["suffix"], env["SHLIBSUFFIX"]), 
     sources
 )
-Default(library)
+targets.append(library)
+if env["install_to_project_bin"]:
+    targets.append(env.InstallVersionedLib(target="project/addons/rmlui/bin/", source=library))
+Default(targets)
 
 
 

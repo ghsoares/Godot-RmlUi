@@ -1,0 +1,309 @@
+<rml>
+<head>
+	<style>
+		body {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			overflow: hidden;
+			flex-direction: column;
+			gap: 16px;
+			decorator: image("res://checker.png" repeat);
+		}
+
+		#main-container {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: auto;
+		}
+
+		#main-container > div.demo {
+			display: block;
+			min-width: 256px;
+			min-height: 256px;
+			max-width: 256px;
+			max-height: 256px;
+			border: 1px red;
+		}
+
+		#main-container > div.scroll-padding {
+			padding: 128px;
+		}
+
+		#main-container > h2 {
+			margin: 0;
+			margin-top: 64px;
+		}
+
+		@keyframes svg-animation {
+			from {
+				transform: rotate(0deg);
+			}
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		#main-container > div.demo > svg {
+			animation: svg-animation 5s infinite;
+			transform-origin: center;
+			width: 280px;
+			height: 280px;
+		}
+
+		.overflow-visible {
+			overflow: visible;
+		}
+
+		.overflow-hidden {
+			overflow: hidden;
+		}
+
+		.overflow-auto {
+			overflow: auto;
+		}
+
+		.overflow-scroll {
+			overflow: scroll;
+		}
+
+		.border-radius {
+			border-radius: 32px;
+		}
+
+		.mask-image {
+			mask-image: image("res://mask.png" cover);
+		}
+
+		.filter-opacity {
+			filter: opacity(0.5);
+		}
+
+		.filter-blur {
+			filter: blur(8px);
+		}
+
+		.filter-drop-shadow {
+			filter: drop-shadow(black 2px 2px 2px);
+		}
+
+		.filter-brightness {
+			filter: brightness(200%);
+		}
+
+		.filter-contrast {
+			filter: contrast(200%);
+		}
+
+		.filter-invert {
+			filter: invert(100%);
+		}
+
+		.filter-grayscale {
+			filter: grayscale(100%);
+		}
+
+		.filter-sepia {
+			filter: sepia(100%);
+		}
+		
+		.filter-hue-rotate {
+			filter: hue-rotate(90deg);
+		}
+
+		.filter-saturate {
+			filter: saturate(200%);
+		}
+
+		.backdrop-filter-opacity {
+			backdrop-filter: opacity(0.5);
+		}
+
+		.backdrop-filter-blur {
+			backdrop-filter: blur(8px);
+		}
+
+		.backdrop-filter-drop-shadow {
+			backdrop-filter: drop-shadow(black 2px 2px 2px);
+		}
+
+		.backdrop-filter-brightness {
+			backdrop-filter: brightness(200%);
+		}
+
+		.backdrop-filter-contrast {
+			backdrop-filter: contrast(200%);
+		}
+
+		.backdrop-filter-invert {
+			backdrop-filter: invert(100%);
+		}
+
+		.backdrop-filter-grayscale {
+			backdrop-filter: grayscale(100%);
+		}
+
+		.backdrop-filter-sepia {
+			backdrop-filter: sepia(100%);
+		}
+		
+		.backdrop-filter-hue-rotate {
+			backdrop-filter: hue-rotate(90deg);
+		}
+
+		.backdrop-filter-saturate {
+			backdrop-filter: saturate(200%);
+		}
+
+		.box-shadow {
+			box-shadow: #000a 5px 5px 5px;
+		}
+
+		.vertical-gradient {
+			decorator: vertical-gradient( #415857 #5990a3 );
+		}
+
+		.horizontal-gradient {
+			decorator: horizontal-gradient( #db6565 #f1b58a );
+		}
+
+		.linear-gradient {
+			decorator: linear-gradient(to top right, red, white, blue);
+		}
+
+		.repeating-linear-gradient {
+			decorator: repeating-linear-gradient(red, white, blue 20%);
+		}
+
+		.radial-gradient {
+			decorator: radial-gradient(circle farthest-side at center, #ff6b6b, #fec84d, #4ecdc4);
+		}
+
+		.repeating-radial-gradient {
+			decorator: repeating-radial-gradient(50px 80px, #f00, #ff0, #f00);
+		}
+
+		.conic-gradient {
+			decorator: conic-gradient(red, yellow);
+		}
+
+		.repeating-conic-gradient {
+			decorator: repeating-conic-gradient(#ffd700, #f06 20deg);
+		}
+	</style>
+</head>
+<body>
+	<h1>Testing rendering interface</h1>
+	<p>This document tests all supported RenderInterface features, to make sure the implemented RenderInterface works</p>
+	<div id="main-container">
+		<h2>Base animation</h2>
+		<div class="demo">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>overflow: visible</h2>
+		<div class="demo overflow-visible">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>overflow: hidden</h2>
+		<div class="demo overflow-hidden">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>overflow: auto</h2>
+		<div class="demo overflow-auto">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>overflow: scroll</h2>
+		<div class="demo overflow-scroll">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>overflow: hidden; border-radius</h2>
+		<div class="demo border-radius overflow-hidden">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>mask-image</h2>
+		<div class="demo mask-image">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: opacity(0.5)</h2>
+		<div class="demo filter-opacity">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: blur(8px)</h2>
+		<div class="demo filter-blur">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: drop-shadow(black 2px 2px 2px)</h2>
+		<div class="demo filter-drop-shadow">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: brightness(200%)</h2>
+		<div class="demo filter-brightness">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: contrast(200%)</h2>
+		<div class="demo filter-contrast">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: invert(100%)</h2>
+		<div class="demo filter-invert">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: grayscale(100%)</h2>
+		<div class="demo filter-grayscale">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: sepia(100%)</h2>
+		<div class="demo filter-sepia">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: hue-rotate(90deg)</h2>
+		<div class="demo filter-hue-rotate">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>filter: saturate(200%)</h2>
+		<div class="demo filter-saturate">
+			<svg src="res://icon.svg"></svg>
+		</div>
+		<h2>backdrop-filter: opacity(0.5)</h2>
+		<div class="demo backdrop-filter-opacity"></div>
+		<h2>backdrop-filter: blur(8px)</h2>
+		<div class="demo backdrop-filter-blur"></div>
+		<h2>backdrop-filter: drop-shadow(black 2px 2px 2px)</h2>
+		<div class="demo backdrop-filter-drop-shadow"></div>
+		<h2>backdrop-filter: brightness(200%)</h2>
+		<div class="demo backdrop-filter-brightness"></div>
+		<h2>backdrop-filter: contrast(200%)</h2>
+		<div class="demo backdrop-filter-contrast"></div>
+		<h2>backdrop-filter: invert(100%)</h2>
+		<div class="demo backdrop-filter-invert"></div>
+		<h2>backdrop-filter: grayscale(100%)</h2>
+		<div class="demo backdrop-filter-grayscale"></div>
+		<h2>backdrop-filter: sepia(100%)</h2>
+		<div class="demo backdrop-filter-sepia"></div>
+		<h2>backdrop-filter: hue-rotate(90deg)</h2>
+		<div class="demo backdrop-filter-hue-rotate"></div>
+		<h2>backdrop-filter: saturate(200%)</h2>
+		<div class="demo backdrop-filter-saturate"></div>
+		<h2>box-shadow: #000a 5px 5px 5px</h2>
+		<div class="demo box-shadow"></div>
+		<h2>decorator: vertical-gradient( #415857 #5990a3 )</h2>
+		<div class="demo vertical-gradient"></div>
+		<h2>decorator: horizontal-gradient( #db6565 #f1b58a )</h2>
+		<div class="demo horizontal-gradient"></div>
+		<h2>decorator: linear-gradient(to top right, red, white, blue)</h2>
+		<div class="demo linear-gradient"></div>
+		<h2>decorator: repeating-linear-gradient(red, white, blue 20%)</h2>
+		<div class="demo repeating-linear-gradient"></div>
+		<h2>decorator: radial-gradient(circle farthest-side at center, #ff6b6b, #fec84d, #4ecdc4)</h2>
+		<div class="demo radial-gradient"></div>
+		<h2>decorator: repeating-radial-gradient(50px 80px, #f00, #ff0, #f00)</h2>
+		<div class="demo repeating-radial-gradient"></div>
+		<h2>decorator: conic-gradient(red, yellow)</h2>
+		<div class="demo conic-gradient"></div>
+		<h2>decorator: repeating-conic-gradient(#ffd700, #f06 20deg)</h2>
+		<div class="demo repeating-conic-gradient"></div>
+		<div class="scroll-padding"></div>
+	</div>
+</body>
+</rml>

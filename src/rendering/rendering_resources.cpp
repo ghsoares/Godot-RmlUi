@@ -42,7 +42,7 @@ void RenderingResources::free_all_resources(ResourceMap &p_map) {
 void RenderingResources::free_all_resources() {
 	// Must follow a order to be able to free the resources correctly
 	free_all_resources(framebuffer_map);
-	free_all_resources(pipeline_map);
+	free_all_resources(render_pipeline_map);
 	free_all_resources(shader_map);
 	free_all_resources(sampler_map);
 	free_all_resources(texture_map);
@@ -68,7 +68,7 @@ IMPLEMENT_RENDERING_RESOURCE(sampler)
 IMPLEMENT_RENDERING_RESOURCE(texture)
 IMPLEMENT_RENDERING_RESOURCE(framebuffer)
 IMPLEMENT_RENDERING_RESOURCE(shader)
-IMPLEMENT_RENDERING_RESOURCE(pipeline)
+IMPLEMENT_RENDERING_RESOURCE(render_pipeline)
 IMPLEMENT_RENDERING_RESOURCE(vertex_buffer)
 IMPLEMENT_RENDERING_RESOURCE(index_buffer)
 IMPLEMENT_RENDERING_RESOURCE(vertex_array)
@@ -161,7 +161,7 @@ RID RenderingResources::create_shader(const std::map<String, Variant> &p_data) {
 	return rid;
 }
 
-RID RenderingResources::create_pipeline(const std::map<String, Variant> &p_data) {
+RID RenderingResources::create_render_pipeline(const std::map<String, Variant> &p_data) {
 	Ref<RDPipelineRasterizationState> rasterization_state;
     Ref<RDPipelineMultisampleState> multisample_state;
     Ref<RDPipelineDepthStencilState> depth_stencil_state;
@@ -192,7 +192,9 @@ RID RenderingResources::create_pipeline(const std::map<String, Variant> &p_data)
 	for (int i = attachment_count - 1; i >= 0; i--) {
 		Ref<RDPipelineColorBlendStateAttachment> attachment = memnew(RDPipelineColorBlendStateAttachment);
 
-		attachment->set_enable_blend(map_get(p_data, vformat("attachment%d_enable_blend", i), false));
+		attachment->set_enable_blend(map_get2(p_data, vformat("attachment%d_enable_blend", i), "attachment_enable_blend", false));
+		attachment->set_color_blend_op((RD::BlendOperation)(int)map_get2(p_data, vformat("attachment%d_color_blend_op", i), "attachment_color_blend_op", RD::BLEND_OP_ADD));
+		attachment->set_alpha_blend_op((RD::BlendOperation)(int)map_get2(p_data, vformat("attachment%d_alpha_blend_op", i), "attachment_alpha_blend_op", RD::BLEND_OP_ADD));
 		attachment->set_src_color_blend_factor((RD::BlendFactor)(int)map_get2(p_data, vformat("attachment%d_src_color_blend_factor", i), "attachment_src_color_blend_factor", RD::BLEND_FACTOR_ZERO));
 		attachment->set_src_alpha_blend_factor((RD::BlendFactor)(int)map_get2(p_data, vformat("attachment%d_src_alpha_blend_factor", i), "attachment_src_alpha_blend_factor", RD::BLEND_FACTOR_ZERO));
 		attachment->set_dst_color_blend_factor((RD::BlendFactor)(int)map_get2(p_data, vformat("attachment%d_dst_color_blend_factor", i), "attachment_dst_color_blend_factor", RD::BLEND_FACTOR_ZERO));
@@ -214,7 +216,17 @@ RID RenderingResources::create_pipeline(const std::map<String, Variant> &p_data)
     );
 	ERR_FAIL_COND_V(!rid.is_valid(), RID());
 
-   	map_resource(rid, pipeline_map);
+   	map_resource(rid, render_pipeline_map);
+	return rid;
+}
+
+RID RenderingResources::create_compute_pipeline(const std::map<String, Variant> &p_data) {
+	RID rid = rendering_device->compute_pipeline_create(
+        map_get(p_data, "shader", RID())
+    );
+	ERR_FAIL_COND_V(!rid.is_valid(), RID());
+
+   	map_resource(rid, compute_pipeline_map);
 	return rid;
 }
 
@@ -275,7 +287,7 @@ RID RenderingResources::create_storage_buffer(const std::map<String, Variant> &p
 	);
 	ERR_FAIL_COND_V(!rid.is_valid(), RID());
 
-	map_resource(rid, sampler_map);
+	map_resource(rid, storage_buffer_map);
 	return rid;
 }
 
