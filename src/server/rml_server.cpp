@@ -401,7 +401,7 @@ void RMLServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("document_process_event", "document", "event"), &RMLServer::document_process_event);
 
 	ClassDB::bind_method(D_METHOD("document_update", "document"), &RMLServer::document_update);
-	ClassDB::bind_method(D_METHOD("document_draw", "document"), &RMLServer::document_draw);
+	ClassDB::bind_method(D_METHOD("document_draw", "document", "canvas_item"), &RMLServer::document_draw);
 
 	ClassDB::bind_method(D_METHOD("load_font_face_from_path", "path", "fallback_face"), &RMLServer::load_font_face_from_path, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("load_font_face_from_buffer", "buffer", "family", "fallback_face", "is_italic"), &RMLServer::load_font_face_from_buffer, DEFVAL(false), DEFVAL(false));
