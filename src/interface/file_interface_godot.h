@@ -5,8 +5,15 @@
 namespace godot {
 
 class FileInterfaceGodot : public Rml::FileInterface {
+	struct ByteFileAccess {
+		PackedByteArray bytes;
+		size_t position = 0;
+	};
 	struct FileHandle {
 		Ref<FileAccess> file;
+		ByteFileAccess *byte_file = nullptr;
+
+		bool is_file() const { return file.is_valid(); }
 	};
 
 public:

@@ -55,11 +55,11 @@ void initialize_gdex_module(ModuleInitializationLevel p_level) {
 			GDREGISTER_CLASS(RMLServer);
 
 			rml_server = memnew(RMLServer);
-			rml_server->load_resources();
 
 			Engine::get_singleton()->register_singleton("RMLServer", rml_server);
 		} break;
 		case MODULE_INITIALIZATION_LEVEL_SCENE: {
+			rml_server->load_resources();
 			GDREGISTER_CLASS(RMLDocument);
 			GDREGISTER_CLASS(RMLElement);
 		} break;
