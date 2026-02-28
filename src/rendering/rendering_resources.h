@@ -94,6 +94,26 @@ public:
 	~RenderingResources();
 };
 
+struct Pipeline {
+	struct PipelineVersion {
+		int64_t vertex_format_id;
+		int64_t framebuffer_format_id;
+		bool clipping;
+		RID pipeline;
+	};
+
+	RenderingResources *resources = nullptr;
+
+	RID shader;
+	std::vector<PipelineVersion> pipeline_versions;
+	std::map<String, Variant> base_params;
+
+	RID get_pipeline_variant(int64_t p_vertex_format, int64_t p_framebuffer_format, bool p_clipping);
+	void free(bool p_shader = false);
+
+	Pipeline(RenderingResources *p_resources, const RID &p_shader, const std::map<String, Variant> &p_params);
+};
+
 #undef DEFINE_RENDERING_RESOURCE
 
 }

@@ -122,8 +122,15 @@ RID RenderingResources::create_texture(const std::map<String, Variant> &p_data) 
     tex_format->set_texture_type((RD::TextureType)(int)map_get(p_data, "texture_type", RD::TEXTURE_TYPE_2D));
     tex_format->set_width(map_get(p_data, "width", 1));
     tex_format->set_height(map_get(p_data, "height", 1));
+	tex_format->set_mipmaps(map_get(p_data, "mipmaps", 1));
     tex_format->set_format((RD::DataFormat)(int)map_get(p_data, "format", RD::DATA_FORMAT_R8G8B8A8_UNORM));
     tex_format->set_usage_bits((uint64_t)map_get(p_data, "usage_bits", RD::TEXTURE_USAGE_SAMPLING_BIT));
+	tex_format->add_shareable_format(tex_format->get_format());
+
+	TypedArray<int> shareable_formats = map_get(p_data, "shareable_formats", TypedArray<int>());
+	for (auto format : shareable_formats) {
+		tex_format->add_shareable_format((RD::DataFormat)(int)format);
+	}
 
 	TypedArray<PackedByteArray> data = map_get(p_data, "data", TypedArray<PackedByteArray>());
 	RID rid = rendering_device->texture_create(
@@ -298,3 +305,53 @@ RenderingResources::RenderingResources(RD *p_rendering_device) {
 RenderingResources::~RenderingResources() {
 	free_all_resources();
 }
+
+RID Pipeline::get_pipeline_variant(int64_t p_vertex_format, int64_t p_framebuffer_format, bool p_clipping) {
+	for (auto &it : pipeline_versions) {
+		if (it.vertex_format_id == p_vertex_format && it.framebuffer_format_id == p_framebuffer_format && it.clipping == p_clipping) {
+			return it.pipeline;
+		}
+	}
+	std::map<String, Variant> params(base_params);
+	params.merge(std::map<String, Variant>({
+		{"shader", shader},
+        {"framebuffer_format", p_framebuffer_format},
+        {"vertex_format", p_vertex_format},
+    }));
+	if (p_clipping) {
+		params.merge(std::map<String, Variant>({
+			{"enable_stencil", true},
+			{"op_ref", 0x01},
+			{"op_compare", RD::COMPARE_OP_EQUAL},
+			{"op_compare_mask", 0xff},
+			{"op_write_mask", 0x00},
+			{"op_pass", RD::STENCIL_OP_KEEP},
+			{"op_fail", RD::STENCIL_OP_KEEP}
+		}));
+	}
+	RID pipeline = resources->create_render_pipeline(params);
+	PipelineVersion version;
+	version.vertex_format_id = p_vertex_format;
+	version.framebuffer_format_id = p_framebuffer_format;
+	version.clipping = p_clipping;
+	version.pipeline = pipeline;
+	pipeline_versions.push_back(version);
+	return pipeline;
+}
+
+void Pipeline::free(bool p_shader) {
+	for (auto it : pipeline_versions) {
+		resources->free_render_pipeline(it.pipeline);
+	}
+	if (p_shader) {
+		resources->free_shader(shader);
+	}
+	pipeline_versions.clear();
+}
+
+Pipeline::Pipeline(RenderingResources *p_resources, const RID &p_shader, const std::map<String, Variant> &p_params) {
+	resources = p_resources;
+	shader = p_shader;
+	base_params = std::map<String, Variant>(p_params);
+}
+

@@ -25,6 +25,7 @@ layout(location = 0) out vec4 o_color;
 
 layout(push_constant, std430) uniform GeometryData {
 	uint mode;
+	float pad0[3];
 } params;
 
 void main() {

@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cmm3fw72sc66p"
+path="res://.godot/imported/blend_mask.glsl-70a303382a6c9cf96afc9fcdb9f005dc.res"
+
+[deps]
+
+source_file="res://addons/rmlui/shaders/filters/blend_mask.glsl"
+dest_files=["res://.godot/imported/blend_mask.glsl-70a303382a6c9cf96afc9fcdb9f005dc.res"]
+
+[params]
+

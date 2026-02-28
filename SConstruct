@@ -5,6 +5,7 @@ import misc.methods
 
 from misc.generate_bindings import generate_input_key_mapping
 
+ARGUMENTS['custom_api_file'] = os.path.abspath('extension_api.json')
 env = SConscript("godot-cpp/SConstruct")
 
 opts = Variables([], ARGUMENTS)

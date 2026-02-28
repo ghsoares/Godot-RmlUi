@@ -77,3 +77,18 @@ Variant godot::rml_to_godot_variant(const Rml::Variant &p_var) {
 		} break;
 	}
 }
+
+Projection godot::rml_to_godot_projection(const Rml::Matrix4f &p_mat) {
+	Rml::Vector4f c0, c1, c2, c3;
+	c0 = p_mat.GetColumn(0);
+	c1 = p_mat.GetColumn(1);
+	c2 = p_mat.GetColumn(2);
+	c3 = p_mat.GetColumn(3);
+	return Projection(
+	    c0.x, c0.y, c0.z, c0.w,
+	    c1.x, c1.y, c1.z, c1.w,
+	    c2.x, c2.y, c2.z, c2.w,
+	    c3.x, c3.y, c3.z, c3.w
+	);
+}
+

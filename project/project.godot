@@ -15,12 +15,8 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="RmlUI"
-config/features=PackedStringArray("4.5", "Mobile")
+config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
-
-[display]
-
-window/vsync/vsync_mode=0
 
 [editor_plugins]
 

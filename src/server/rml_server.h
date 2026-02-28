@@ -3,6 +3,7 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event.hpp>
+#include <godot_cpp/classes/render_canvas_data_rd.hpp>
 #include <godot_cpp/templates/rid_owner.hpp>
 #include <RmlUi/Core.h>
 
@@ -26,11 +27,14 @@ class RMLServer: public Object {
 		Rml::ElementDocument *doc;
 		Input::CursorShape cursor_shape = Input::CURSOR_ARROW;
 		void *draw_context = nullptr;
+		std::mutex lock;
 	};
 
 	RID_Owner<DocumentData> document_owner;
 
 	RID initialize_document();
+
+	void document_draw_callback(RenderCanvasDataRD *p_render_data, const RID &p_document_rid, const RID &p_canvas_item_rid, const Vector2i &p_base_offset);
 protected:
 	static void _bind_methods();
 	
@@ -52,7 +56,7 @@ public:
 	bool document_process_event(const RID &p_document, const Ref<InputEvent> &p_event);
 	void document_set_cursor_shape(const RID &p_document, const Input::CursorShape &p_shape);
 	Input::CursorShape document_get_cursor_shape(const RID &p_document);
-	void document_draw(const RID &p_document, const RID &p_canvas_item);
+	void document_draw(const RID &p_document, const RID &p_canvas_item, const Vector2i &p_base_offset);
 
 	bool load_default_stylesheet(const String &p_path);
 

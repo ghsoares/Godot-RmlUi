@@ -1,0 +1,37 @@
+<rml>
+<head>
+	<style>
+		body {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+			align-items: center;
+			justify-content: center;
+		}
+
+		#div1 {
+			width: 256px;
+			height: 256px;
+			overflow: hidden;
+			transform: rotate(45deg);
+			/* decorator: image("res://icon.svg" cover); */
+			backdrop-filter: blur(8px);
+			border: 2px red;
+			/* mask-image: image("res://mask.png" cover); */
+		}
+		#div2 {
+			width: 512px;
+			height: 512px;
+			/* background-color: blue; */
+			/* transform: rotate(-45deg); */
+		}
+	</style>
+</head>
+<body>
+	<div id="div1">
+		<div id="div2"></div>
+	</div>
+</body>
+</rml>

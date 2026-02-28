@@ -4,8 +4,9 @@
 layout(location = 0) in vec2 i_vertex_position;
 
 layout(push_constant, std430) uniform GeometryData {
-	vec2 inv_viewport_size;
 	mat4 transform;
+	vec2 inv_viewport_size;
+	float pad0[2];
 } geometry_data;
 
 void main() {

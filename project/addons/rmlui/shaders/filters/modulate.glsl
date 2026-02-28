@@ -25,6 +25,7 @@ layout(location = 0) out vec4 o_color;
 layout(push_constant, std430) uniform FilterParams {
 	vec4 modulate;
 	uint space;
+	float pad0[3];
 } params;
 
 void main() {

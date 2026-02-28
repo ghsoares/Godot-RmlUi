@@ -1,6 +1,8 @@
 #[vertex]
 #version 450 core
 
+#include "common.glsl.inc"
+
 layout(location = 0) in vec2 i_vertex_position;
 layout(location = 1) in vec4 i_vertex_color;
 layout(location = 2) in vec2 i_vertex_uv;
@@ -9,8 +11,10 @@ layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_color;
 
 layout(push_constant, std430) uniform GeometryData {
-	vec2 inv_viewport_size;
 	mat4 transform;
+	vec2 inv_viewport_size;
+	uint flags;
+	float pad0;
 } geometry_data;
 
 void main() {
@@ -23,6 +27,8 @@ void main() {
 
 	o_uv = i_vertex_uv;
 	o_color = i_vertex_color;
+
+	o_color.rgb = bool(geometry_data.flags & FLAGS_CONVERT_SRGB_TO_LINEAR) ? srgb_to_linear(o_color.rgb) : o_color.rgb;
 }
 
 #[fragment]
@@ -32,11 +38,6 @@ layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_color;
 
 layout(location = 0) out vec4 o_color;
-
-layout(push_constant, std430) uniform GeometryData {
-	vec2 inv_viewport_size;
-	mat4 transform;
-} geometry_data;
 
 layout(set = 0, binding = 0) uniform sampler2D albedo_tex;
 

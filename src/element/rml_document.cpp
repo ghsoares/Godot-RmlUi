@@ -29,7 +29,7 @@ void RMLDocument::_notification(int p_what) {
 			queue_redraw();
 		} break;
 		case NOTIFICATION_DRAW: {
-			RMLServer::get_singleton()->document_draw(rid, get_canvas_item());
+			RMLServer::get_singleton()->document_draw(rid, get_canvas_item(), get_global_rect().position);
 		} break;
 		case NOTIFICATION_RESIZED: {
 			RMLServer::get_singleton()->document_set_size(rid, Vector2i(

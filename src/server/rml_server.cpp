@@ -10,7 +10,7 @@
 #include <godot_cpp/classes/font_file.hpp>
 #include <godot_cpp/classes/theme_db.hpp>
 #include <godot_cpp/classes/file_access.hpp>
-#include "../interface/render_interface_godot.h"
+#include "../interface/rd_render_interface_godot.h"
 #include "../interface/system_interface_godot.h"
 #include "../plugin/rml_godot_plugin.h"
 #include "../rml_util.h"
@@ -19,6 +19,8 @@
 #include "rml_server.h"
 
 using namespace godot;
+
+#define LOCK_DOCUMENT(p_doc) const std::lock_guard<std::mutex> lock(p_doc->lock)
 
 RMLServer *RMLServer::singleton = nullptr;
 
@@ -42,25 +44,22 @@ void RMLServer::load_resources() {
 }
 
 void RMLServer::initialize() {
-	RenderInterfaceGodot *ri = dynamic_cast<RenderInterfaceGodot *>(Rml::GetRenderInterface());
-	ERR_FAIL_NULL_MSG(ri, "Render interface configured is not of type RenderInterfaceGodot");
+	RDRenderInterfaceGodot *ri = dynamic_cast<RDRenderInterfaceGodot *>(Rml::GetRenderInterface());
+	ERR_FAIL_NULL_MSG(ri, "Render interface configured is not of type RDRenderInterfaceGodot");
 	ri->initialize();
 
 	Rml::Log::Message(Rml::Log::LT_INFO, "RMLServer initialized.");
 }
 
 void RMLServer::uninitialize() {
-	RenderInterfaceGodot *ri = dynamic_cast<RenderInterfaceGodot *>(Rml::GetRenderInterface());
-	ERR_FAIL_NULL_MSG(ri, "Render interface configured is not of type RenderInterfaceGodot");
+	RDRenderInterfaceGodot *ri = dynamic_cast<RDRenderInterfaceGodot *>(Rml::GetRenderInterface());
+	ERR_FAIL_NULL_MSG(ri, "Render interface configured is not of type RDRenderInterfaceGodot");
 	ri->finalize();
 
 	Rml::Log::Message(Rml::Log::LT_INFO, "RMLServer uninitialized.");
 }
 
 RID RMLServer::initialize_document() {
-	RenderInterfaceGodot *ri = dynamic_cast<RenderInterfaceGodot *>(Rml::GetRenderInterface());
-	ERR_FAIL_NULL_V_MSG(ri, RID(), "Render interface configured is not of type RenderInterfaceGodot");
-
 	RID new_rid = document_owner.make_rid();
 	String context_id = vformat("godot_context_%d", new_rid.get_id());
 	DocumentData *doc_data = document_owner.get_or_null(new_rid);
@@ -135,6 +134,7 @@ Ref<RMLElement> RMLServer::get_document_root(const RID &p_document) {
 	ERR_FAIL_COND_V(!document_owner.owns(p_document), nullptr);
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL_V(doc_data, nullptr);
+	LOCK_DOCUMENT(doc_data);
 
 	return RMLElement::ref(doc_data->doc);
 }
@@ -143,6 +143,7 @@ Ref<RMLElement> RMLServer::create_element(const RID &p_document, const String &p
 	ERR_FAIL_COND_V(!document_owner.owns(p_document), nullptr);
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL_V(doc_data, nullptr);
+	LOCK_DOCUMENT(doc_data);
 
 	Rml::String tag_name = godot_to_rml_string(p_tag_name);
 
@@ -153,6 +154,7 @@ void RMLServer::document_update(const RID &p_document) {
 	ERR_FAIL_COND(!document_owner.owns(p_document));
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL(doc_data);
+	LOCK_DOCUMENT(doc_data);
 	doc_data->ctx->Update();
 }
 
@@ -160,6 +162,7 @@ void RMLServer::document_set_size(const RID &p_document, const Vector2i &p_size)
 	ERR_FAIL_COND(!document_owner.owns(p_document));
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL(doc_data);
+	LOCK_DOCUMENT(doc_data);
 	doc_data->ctx->SetDimensions(Rml::Vector2i(
 		p_size.x,
 		p_size.y
@@ -170,6 +173,7 @@ bool RMLServer::document_process_event(const RID &p_document, const Ref<InputEve
 	ERR_FAIL_COND_V(!document_owner.owns(p_document), false);
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL_V(doc_data, false);
+	LOCK_DOCUMENT(doc_data);
 
 	SystemInterfaceGodot::get_singleton()->set_context_document(p_document);
 	bool propagated = true;
@@ -319,6 +323,7 @@ void RMLServer::document_set_cursor_shape(const RID &p_document, const Input::Cu
 	ERR_FAIL_COND(!document_owner.owns(p_document));
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL(doc_data);
+	LOCK_DOCUMENT(doc_data);
 
 	doc_data->cursor_shape = p_shape;
 }
@@ -327,17 +332,16 @@ Input::CursorShape RMLServer::document_get_cursor_shape(const RID &p_document) {
 	ERR_FAIL_COND_V(!document_owner.owns(p_document), Input::CURSOR_ARROW);
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL_V(doc_data, Input::CURSOR_ARROW);
+	LOCK_DOCUMENT(doc_data);
 
 	return doc_data->cursor_shape;
 }
 
-void RMLServer::document_draw(const RID &p_document, const RID &p_canvas_item) {
-	RenderInterfaceGodot *ri = dynamic_cast<RenderInterfaceGodot *>(Rml::GetRenderInterface());
-	ERR_FAIL_NULL_MSG(ri, "Render interface configured is not of type RenderInterfaceGodot");
-
+void RMLServer::document_draw(const RID &p_document, const RID &p_canvas_item, const Vector2i &p_base_offset) {
 	ERR_FAIL_COND(!document_owner.owns(p_document));
 	DocumentData *doc_data = document_owner.get_or_null(p_document);
 	ERR_FAIL_NULL(doc_data);
+	LOCK_DOCUMENT(doc_data);
 
 	Vector2i size = Vector2i(
 		doc_data->ctx->GetDimensions().x,
@@ -347,10 +351,23 @@ void RMLServer::document_draw(const RID &p_document, const RID &p_canvas_item) {
 		return;
 	}
 
+	RDRenderInterfaceGodot *ri = dynamic_cast<RDRenderInterfaceGodot *>(Rml::GetRenderInterface());
+	ERR_FAIL_NULL_MSG(ri, "Render interface configured is not of type RDRenderInterfaceGodot");
+
 	ri->push_context(doc_data->draw_context, size);
 	doc_data->ctx->Render();
 	ri->pop_context();
-	ri->draw_context(doc_data->draw_context, p_canvas_item);
+
+	RenderingServer *rs = RenderingServer::get_singleton();
+	rs->canvas_item_add_rendering_callback(p_canvas_item, callable_mp(this, &RMLServer::document_draw_callback).bind(p_document, p_canvas_item, p_base_offset));
+	// ri->draw_context(doc_data->draw_context, p_canvas_item, p_base_transform);
+}
+
+void RMLServer::document_draw_callback(RenderCanvasDataRD *p_render_data, const RID &p_document, const RID &p_canvas_item, const Vector2i &p_base_offset) {
+	RDRenderInterfaceGodot *ri = dynamic_cast<RDRenderInterfaceGodot *>(Rml::GetRenderInterface());
+	DocumentData *doc_data = document_owner.get_or_null(p_document);
+	LOCK_DOCUMENT(doc_data);
+	ri->draw_context(doc_data->draw_context, p_canvas_item, p_base_offset, p_render_data);
 }
 
 bool RMLServer::load_default_stylesheet(const String &p_path) {
@@ -377,15 +394,18 @@ bool RMLServer::load_font_face_from_buffer(const PackedByteArray &p_buffer, cons
 }
 
 void RMLServer::free_rid(const RID &p_rid) {
-	RenderInterfaceGodot *ri = dynamic_cast<RenderInterfaceGodot *>(Rml::GetRenderInterface());
-	ERR_FAIL_NULL_MSG(ri, "Render interface configured is not of type RenderInterfaceGodot");
+	RDRenderInterfaceGodot *ri = dynamic_cast<RDRenderInterfaceGodot *>(Rml::GetRenderInterface());
+	ERR_FAIL_NULL_MSG(ri, "Render interface configured is not of type RDRenderInterfaceGodot");
 
 	if (document_owner.owns(p_rid)) {
 		DocumentData *doc_data = document_owner.get_or_null(p_rid);
+		doc_data->lock.lock();
+		
 		Rml::RemoveContext(doc_data->ctx->GetName());
-		
 		ri->free_context(doc_data->draw_context);
+		ri->free_pending_resources();
 		
+		doc_data->lock.unlock();
 		document_owner.free(p_rid);
 	}
 }
@@ -401,7 +421,7 @@ void RMLServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("document_process_event", "document", "event"), &RMLServer::document_process_event);
 
 	ClassDB::bind_method(D_METHOD("document_update", "document"), &RMLServer::document_update);
-	ClassDB::bind_method(D_METHOD("document_draw", "document", "canvas_item"), &RMLServer::document_draw);
+	ClassDB::bind_method(D_METHOD("document_draw", "document", "canvas_item", "base_offset"), &RMLServer::document_draw);
 
 	ClassDB::bind_method(D_METHOD("load_font_face_from_path", "path", "fallback_face"), &RMLServer::load_font_face_from_path, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("load_font_face_from_buffer", "buffer", "family", "fallback_face", "is_italic"), &RMLServer::load_font_face_from_buffer, DEFVAL(false), DEFVAL(false));

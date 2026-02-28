@@ -23,5 +23,7 @@ Key rml_to_godot_key(const Rml::Input::KeyIdentifier &p_key);
 Rml::Input::KeyModifier godot_to_rml_key_modifiers(const BitField<KeyModifierMask> &p_mod);
 BitField<KeyModifierMask> rml_to_godot_key_modifiers(const Rml::Input::KeyModifier &p_mod);
 
+Projection rml_to_godot_projection(const Rml::Matrix4f &p_mat);
+
 }
 

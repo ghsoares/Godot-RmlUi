@@ -8,7 +8,11 @@
 			overflow: hidden;
 			flex-direction: column;
 			gap: 16px;
-			decorator: image("res://checker.png" repeat);
+			/* decorator: image("res://checker.png" repeat); */
+		}
+
+		body > h1, body > p {
+			font-effect: outline(2px black);
 		}
 
 		#main-container {
@@ -34,6 +38,7 @@
 		#main-container > h2 {
 			margin: 0;
 			margin-top: 64px;
+			font-effect: outline(2px black);
 		}
 
 		@keyframes svg-animation {

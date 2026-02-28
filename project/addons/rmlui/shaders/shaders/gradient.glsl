@@ -1,6 +1,8 @@
 #[vertex]
 #version 450 core
 
+#include "../common.glsl.inc"
+
 layout(location = 0) in vec2 i_vertex_position;
 layout(location = 1) in vec4 i_vertex_color;
 layout(location = 2) in vec2 i_vertex_uv;
@@ -9,29 +11,35 @@ layout(location = 0) out vec2 o_uv;
 layout(location = 1) out vec4 o_color;
 
 layout(push_constant, std430) uniform GeometryData {
-	vec2 inv_viewport_size;
 	mat4 transform;
+	vec2 inv_viewport_size;
+	uint flags;
+	float pad0;
 
-	vec2 p0;
-	vec2 p1;
-	bool repeating;
-	float len;
+	vec2 p;
+	vec2 v;
+	
+	uint type;
+	uint stop_count;
+	float pad1[2];
 } geometry_data;
 
 void main() {
 	vec2 pos = i_vertex_position;
-	pos = (geometry_data.transform * vec4(pos, 0.0, 1.0)).xy;
+	pos = (geometry_data.transform * vec4(pos, 0.0, 1.0)).xy * geometry_data.inv_viewport_size;
 
-	vec2 screen_uv = pos * geometry_data.inv_viewport_size;
-
-	gl_Position = vec4(screen_uv * 2.0 - 1.0, 0.0, 1.0);
+	gl_Position = vec4(pos * 2.0 - 1.0, 0.0, 1.0);
 
 	o_uv = i_vertex_uv;
 	o_color = i_vertex_color;
+
+	o_color.rgb = bool(geometry_data.flags & FLAGS_CONVERT_SRGB_TO_LINEAR) ? srgb_to_linear(o_color.rgb) : o_color.rgb;
 }
 
 #[fragment]
 #version 450 core
+
+#include "../common.glsl.inc"
 
 layout(location = 0) in vec2 i_uv;
 layout(location = 1) in vec4 i_color;
@@ -48,14 +56,19 @@ layout(location = 0) out vec4 o_color;
 #define INV_TAU 0.15915494309
 
 layout(push_constant, std430) uniform GeometryData {
-	vec2 inv_viewport_size;
 	mat4 transform;
+	vec2 inv_viewport_size;
+	uint flags;
+	float pad0;
 
-	uint type;
-	uint stop_count;
 	vec2 p;
 	vec2 v;
+	
+	uint type;
+	uint stop_count;
+	float pad1[2];
 } geometry_data;
+
 
 layout(std430, set = 0, binding = 1) buffer GradientBuffer {
 	// List of rgba + position
@@ -83,6 +96,8 @@ vec4 mix_stop_colors(float t) {
 
 		color = mix(color, c, smoothstep(s0, s1, t));
 	}
+
+	color.rgb = bool(geometry_data.flags & FLAGS_CONVERT_SRGB_TO_LINEAR) ? srgb_to_linear(color.rgb) : color.rgb;
 
 	return color;
 }

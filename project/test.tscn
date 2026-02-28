@@ -1,8 +1,68 @@
-[gd_scene load_steps=2 format=3 uid="uid://djfrrj5e8u1u1"]
+[gd_scene format=3 uid="uid://djfrrj5e8u1u1"]
 
+[ext_resource type="Texture2D" uid="uid://xgpop51gvk03" path="res://checker.png" id="1_8uh7m"]
 [ext_resource type="Script" uid="uid://b6s5y72kvuolt" path="res://test.gd" id="1_37kl0"]
 
-[node name="test" type="RMLDocument"]
+[sub_resource type="Shader" id="Shader_8uh7m"]
+code = "shader_type canvas_item;
+
+uniform sampler2D screen_color: hint_screen_texture, filter_linear_mipmap;
+
+void vertex() {
+	// Called for every vertex the material is visible on.
+}
+
+void fragment() {
+	// Called for every pixel the material is visible on.
+	COLOR = textureLod(screen_color, SCREEN_UV, 4.0);
+}
+
+//void light() {
+//	// Called for every pixel for every light affecting the CanvasItem.
+//	// Uncomment to replace the default light processing function with this one.
+//}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6uqi0"]
+shader = SubResource("Shader_8uh7m")
+
+[sub_resource type="Environment" id="Environment_8uh7m"]
+background_mode = 3
+glow_levels/7 = 0.77
+glow_intensity = 4.0
+
+[node name="test" type="Control" unique_id=2122919713]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=934687553]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_8uh7m")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1107558742]
+visible = false
+material = SubResource("ShaderMaterial_6uqi0")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="RMLDocument" type="RMLDocument" parent="." unique_id=1288642547]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -10,13 +70,13 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_37kl0")
 
-[node name="fps" type="Label" parent="."]
+[node name="fps" type="Label" parent="RMLDocument" unique_id=2116742959]
 layout_mode = 1
 offset_right = 60.0
 offset_bottom = 23.0
 text = "FPS: %d"
 
-[node name="next_test" type="Button" parent="."]
+[node name="next_test" type="Button" parent="RMLDocument" unique_id=115289570]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -25,3 +85,17 @@ offset_left = -82.0
 offset_bottom = 31.0
 grow_horizontal = 0
 text = "Next Test"
+
+[node name="toggle_vsync" type="Button" parent="RMLDocument" unique_id=960527968]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -82.0
+offset_top = 37.0
+offset_bottom = 68.0
+grow_horizontal = 0
+text = "Toggle Vsync"
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=110284208]
+environment = SubResource("Environment_8uh7m")
