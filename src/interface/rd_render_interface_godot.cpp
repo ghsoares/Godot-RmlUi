@@ -557,8 +557,8 @@ RDRenderInterfaceGodot::RenderPass RDRenderInterfaceGodot::blit_pass(const RID &
 	pass.uniform_textures.push_back(std::make_pair(p_tex, false));
 	pass.framebuffer = p_framebuffer;
 
-    pass.push_const.resize(16);
-    float *push_const = (float *)pass.push_const.ptrw();
+    pass.push_const.resize(8);
+    int *push_const = (int *)pass.push_const.ptrw();
     push_const[0] = p_src_pos.x;
     push_const[1] = p_src_pos.y;
 
@@ -861,7 +861,7 @@ void RDRenderInterfaceGodot::CompositeLayers(Rml::LayerHandle source, Rml::Layer
 	pass.shader = shader_layer_composition;
     pass.pipeline = get_shader_pipeline(PIPELINE_LAYER_COMPOSITION);
 
-	pass.push_const.resize(16);
+	pass.push_const.resize(4);
     unsigned int *push_const = (unsigned int *)pass.push_const.ptrw();
     push_const[0] = (unsigned int)blend_mode;
 	
@@ -955,7 +955,7 @@ Rml::CompiledFilterHandle RDRenderInterfaceGodot::CompileFilter(const Rml::Strin
         pass.framebuffer = context->back_buffer1.framebuffer;
 
         pass.push_const = PackedByteArray();
-        pass.push_const.resize(32);
+        pass.push_const.resize(20);
 
         float *push_const_ptr = (float *)pass.push_const.ptrw();
         push_const_ptr[0] = 1.0f;
@@ -978,7 +978,7 @@ Rml::CompiledFilterHandle RDRenderInterfaceGodot::CompileFilter(const Rml::Strin
         
         // Horizontal pass
         pass.push_const = PackedByteArray();
-        pass.push_const.resize(32);
+        pass.push_const.resize(20);
         float *push_const_ptr = (float *)pass.push_const.ptrw();
         push_const_ptr[0] = 1.0f;
         push_const_ptr[1] = 0.0f;
@@ -994,7 +994,7 @@ Rml::CompiledFilterHandle RDRenderInterfaceGodot::CompileFilter(const Rml::Strin
         pass.uniform_textures.push_back(std::make_pair(context->back_buffer1.color, false));
         pass.framebuffer = context->back_buffer0.framebuffer;
         pass.push_const = PackedByteArray();
-        pass.push_const.resize(32);
+        pass.push_const.resize(20);
         push_const_ptr = (float *)pass.push_const.ptrw();
         push_const_ptr[0] = 0.0f;
         push_const_ptr[1] = 1.0f;
@@ -1017,7 +1017,7 @@ Rml::CompiledFilterHandle RDRenderInterfaceGodot::CompileFilter(const Rml::Strin
         pass.framebuffer = context->back_buffer1.framebuffer;
 
         pass.push_const = PackedByteArray();
-        pass.push_const.resize(32);
+        pass.push_const.resize(20);
         float *push_const_ptr = (float *)pass.push_const.ptrw();
         push_const_ptr[0] = 1.0f;
         push_const_ptr[1] = 0.0f;
@@ -1033,7 +1033,7 @@ Rml::CompiledFilterHandle RDRenderInterfaceGodot::CompileFilter(const Rml::Strin
         pass.uniform_textures.push_back(std::make_pair(context->back_buffer1.color, false));
         pass.framebuffer = context->back_buffer2.framebuffer;
         pass.push_const = PackedByteArray();
-        pass.push_const.resize(32);
+        pass.push_const.resize(20);
         push_const_ptr = (float *)pass.push_const.ptrw();
         push_const_ptr[0] = 0.0f;
         push_const_ptr[1] = 1.0f;
@@ -1073,7 +1073,7 @@ Rml::CompiledFilterHandle RDRenderInterfaceGodot::CompileFilter(const Rml::Strin
         pass.framebuffer = context->back_buffer1.framebuffer;
 
         pass.push_const = PackedByteArray();
-        pass.push_const.resize(32);
+        pass.push_const.resize(20);
         
         float *push_const_ptr = (float *)pass.push_const.ptrw();
         push_const_ptr[0] = value;
@@ -1191,7 +1191,7 @@ Rml::CompiledFilterHandle RDRenderInterfaceGodot::CompileFilter(const Rml::Strin
         pass.framebuffer = context->back_buffer1.framebuffer;
 
         pass.push_const = PackedByteArray();
-        pass.push_const.resize(32);
+        pass.push_const.resize(20);
         float *push_const_ptr = (float *)pass.push_const.ptrw();
         unsigned int *push_const_int_ptr = (unsigned int *)pass.push_const.ptrw();
         push_const_ptr[0] = value / Math_TAU;
@@ -1292,7 +1292,7 @@ Rml::CompiledShaderHandle RDRenderInterfaceGodot::CompileShader(const Rml::Strin
         });
 
         params.push_const = PackedByteArray();
-        params.push_const.resize(112);
+        params.push_const.resize(104);
         float *push_const_ptr = (float *)params.push_const.ptrw();
         unsigned int *push_const_uint_ptr = (unsigned int *)params.push_const.ptrw();
         push_const_uint_ptr[20] = (grad_type << 1) | (repeating ? 1 : 0);
